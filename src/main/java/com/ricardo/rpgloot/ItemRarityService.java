@@ -75,11 +75,12 @@ public final class ItemRarityService {
         if (!rolledStats.isEmpty()) {
             lore.add(Component.empty());
             for (RolledStat rolled : rolledStats) {
-                lore.add(Component.text(rolled.stat().getLabel() + ": +" + round(rolled.value()) + rolled.stat().getUnit(),
+                lore.add(Component.text(rolled.stat().getLabel() + ": +" + (int) Math.round(rolled.value()) + rolled.stat().getUnit(),
                         NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
             }
         }
         meta.lore(lore);
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
 
         item.setItemMeta(meta);
         return item;
