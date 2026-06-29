@@ -2,10 +2,19 @@ package com.ricardo.rpgloot;
 
 public enum BonusStat {
 
+    // Sword & Axe
     LIFESTEAL("Lifesteal", "%", new double[]{1, 3}, new double[]{3, 6}, new double[]{6, 10}, new double[]{8, 12}),
     CRIT_CHANCE("Crit Chance", "%", new double[]{2, 5}, new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 20}),
     KNOCKBACK_BOOST("Knockback", " pts", new double[]{1, 1}, new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}),
-    SWEEP_BONUS("Sweep Damage", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40});
+    SWEEP_BONUS("Sweep Damage", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+
+    // Trident
+    RIPTIDE_SPEED("Riptide Speed", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+    LIGHTNING_CHANCE("Lightning Strike", "%", new double[]{3, 6}, new double[]{6, 12}, new double[]{12, 18}, new double[]{18, 25}),
+
+    // Mace
+    SMASH_RADIUS("Smash Radius", " blk", new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}, new double[]{4, 5}),
+    FALL_DAMAGE_BONUS("Fall Damage Bonus", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70});
 
     private final String label;
     private final String unit;

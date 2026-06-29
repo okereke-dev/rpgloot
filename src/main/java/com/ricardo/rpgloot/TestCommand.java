@@ -20,7 +20,8 @@ public final class TestCommand implements CommandExecutor, TabCompleter {
             Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
             Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
             Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
-            Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE);
+            Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE,
+            Material.TRIDENT, Material.MACE);
 
     private final ItemRarityService rarityService;
     private final Random random = new Random();

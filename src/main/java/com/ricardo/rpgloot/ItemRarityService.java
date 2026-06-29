@@ -19,21 +19,10 @@ import java.util.Set;
 
 public final class ItemRarityService {
 
-    private static final Set<Material> SWORDS = EnumSet.of(
-            Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
-            Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD);
-
-    private static final Set<Material> AXES = EnumSet.of(
-            Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
-            Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE);
-
-    private static final Set<BonusStat> WEAPON_BONUS_STATS = EnumSet.of(
-            BonusStat.LIFESTEAL, BonusStat.CRIT_CHANCE, BonusStat.KNOCKBACK_BOOST, BonusStat.SWEEP_BONUS);
-
     private final Random random = new Random();
 
     public boolean isSupportedWeapon(Material material) {
-        return SWORDS.contains(material) || AXES.contains(material);
+        return WeaponType.isSupported(material);
     }
 
     public ItemStack applyRarity(ItemStack item, Rarity rarity) {
@@ -58,7 +47,8 @@ public final class ItemRarityService {
                     AttributeModifier.Operation.ADD_SCALAR));
         }
 
-        List<RolledStat> rolledStats = rollBonusStats(rarity);
+        WeaponType weaponType = WeaponType.of(item.getType());
+        List<RolledStat> rolledStats = rollBonusStats(rarity, weaponType);
 
         meta.getPersistentDataContainer().set(Keys.RARITY, PersistentDataType.STRING, rarity.name());
         meta.getPersistentDataContainer().set(Keys.BONUS_STATS, PersistentDataType.STRING, serializeStats(rolledStats));
@@ -112,9 +102,9 @@ public final class ItemRarityService {
         return stats;
     }
 
-    private List<RolledStat> rollBonusStats(Rarity rarity) {
+    private List<RolledStat> rollBonusStats(Rarity rarity, WeaponType weaponType) {
         List<RolledStat> result = new ArrayList<>();
-        List<BonusStat> pool = new ArrayList<>(WEAPON_BONUS_STATS);
+        List<BonusStat> pool = weaponType != null ? new ArrayList<>(weaponType.getBonusPool()) : new ArrayList<>();
         int count = Math.min(rarity.getBonusStatCount(), pool.size());
 
         for (int i = 0; i < count; i++) {

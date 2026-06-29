@@ -18,7 +18,8 @@ public final class LootListener implements Listener {
             Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
             Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
             Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
-            Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE);
+            Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE,
+            Material.TRIDENT, Material.MACE);
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
