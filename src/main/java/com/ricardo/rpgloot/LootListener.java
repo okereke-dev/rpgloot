@@ -28,7 +28,7 @@ public final class LootListener implements Listener {
     public LootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
-        this.roller = new RarityRoller(plugin.getConfig());
+        this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
     }
 
     @EventHandler
