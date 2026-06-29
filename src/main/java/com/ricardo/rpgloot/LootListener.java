@@ -22,12 +22,13 @@ public final class LootListener implements Listener {
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
-    private final RarityRoller roller = new RarityRoller();
+    private final RarityRoller roller;
     private final Random random = new Random();
 
     public LootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
+        this.roller = new RarityRoller(plugin.getConfig());
     }
 
     @EventHandler

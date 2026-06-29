@@ -1,2 +1,11 @@
 # Chance that a hostile mob drops a rarity weapon on death (0.0 - 1.0)
 drop-chance: 0.08
+
+# Drop weight per rarity — higher number = more common
+# Total does not need to add up to 100, weights are relative
+rarity-weights:
+  common: 50
+  uncommon: 30
+  rare: 13
+  hero: 5
+  legendary: 2
