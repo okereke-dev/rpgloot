@@ -12,10 +12,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 public final class ItemRarityService {
 
@@ -31,20 +29,23 @@ public final class ItemRarityService {
         double damageMultiplier = randomBetween(rarity.getMinDamageMultiplier(), rarity.getMaxDamageMultiplier());
         double speedMultiplier = randomBetween(rarity.getMinSpeedMultiplier(), rarity.getMaxSpeedMultiplier());
 
-        meta.removeAttributeModifier(Attribute.ATTACK_DAMAGE);
-        meta.removeAttributeModifier(Attribute.ATTACK_SPEED);
+        double baseDamage = VanillaStats.baseDamage(item.getType());
+        double baseSpeed = VanillaStats.baseSpeed(item.getType());
 
-        if (damageMultiplier != 1.0) {
+        double damageBonus = baseDamage * (damageMultiplier - 1.0);
+        double speedBonus = baseSpeed * (speedMultiplier - 1.0);
+
+        if (damageBonus > 0) {
             meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, new AttributeModifier(
-                    NamespacedKey.minecraft("rpgloot_damage"),
-                    damageMultiplier - 1.0,
-                    AttributeModifier.Operation.ADD_SCALAR));
+                    new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_damage"),
+                    damageBonus,
+                    AttributeModifier.Operation.ADD_NUMBER));
         }
-        if (speedMultiplier != 1.0) {
+        if (speedBonus > 0) {
             meta.addAttributeModifier(Attribute.ATTACK_SPEED, new AttributeModifier(
-                    NamespacedKey.minecraft("rpgloot_speed"),
-                    speedMultiplier - 1.0,
-                    AttributeModifier.Operation.ADD_SCALAR));
+                    new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_speed"),
+                    speedBonus,
+                    AttributeModifier.Operation.ADD_NUMBER));
         }
 
         WeaponType weaponType = WeaponType.of(item.getType());
