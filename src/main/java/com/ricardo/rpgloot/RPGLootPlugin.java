@@ -20,12 +20,12 @@ public class RPGLootPlugin extends JavaPlugin {
         getCommand("rpgloot").setExecutor(testCommand);
         getCommand("rpgloot").setTabCompleter(testCommand);
 
-        getLogger().info("RPGLoot habilitado");
+        getLogger().info("RPGLoot enabled");
     }
 
     @Override
     public void onDisable() {
-        getLogger().info("RPGLoot deshabilitado");
+        getLogger().info("RPGLoot disabled");
     }
 
     public ItemRarityService getRarityService() {

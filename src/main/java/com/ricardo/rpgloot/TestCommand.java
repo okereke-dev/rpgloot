@@ -32,7 +32,7 @@ public final class TestCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Component.text("Solo jugadores.", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Players only.", NamedTextColor.RED));
             return true;
         }
 
@@ -49,7 +49,7 @@ public final class TestCommand implements CommandExecutor, TabCompleter {
                 ItemStack weapon = new ItemStack(material);
                 rarityService.applyRarity(weapon, rarity);
                 player.getInventory().addItem(weapon);
-                player.sendMessage(Component.text("Generado: " + rarity.getDisplayName() + " " + material.name(), rarity.getColor()));
+                player.sendMessage(Component.text("Generated: " + rarity.getDisplayName() + " " + material.name(), rarity.getColor()));
             }
             case "getall" -> {
                 for (Rarity rarity : Rarity.values()) {
@@ -58,7 +58,7 @@ public final class TestCommand implements CommandExecutor, TabCompleter {
                     rarityService.applyRarity(weapon, rarity);
                     player.getInventory().addItem(weapon);
                 }
-                player.sendMessage(Component.text("Generados 5 items, uno por rareza.", NamedTextColor.GREEN));
+                player.sendMessage(Component.text("Generated 5 items, one per rarity.", NamedTextColor.GREEN));
             }
             default -> sendHelp(player);
         }
@@ -105,10 +105,10 @@ public final class TestCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(Player player) {
         player.sendMessage(Component.text("--- RPGLoot ---", NamedTextColor.GOLD));
-        player.sendMessage(Component.text("/rpgloot get [rareza] [material]", NamedTextColor.YELLOW)
-                .append(Component.text(" — genera un arma", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/rpgloot get [rarity] [material]", NamedTextColor.YELLOW)
+                .append(Component.text(" — generates a weapon", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/rpgloot getall", NamedTextColor.YELLOW)
-                .append(Component.text(" — una arma de cada rareza", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("Rarezas: common, uncommon, rare, hero, legendary", NamedTextColor.GRAY));
+                .append(Component.text(" — one weapon per rarity", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("Rarities: common, uncommon, rare, hero, legendary", NamedTextColor.GRAY));
     }
 }

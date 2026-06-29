@@ -1,2 +1,2 @@
-# Probabilidad de que un mob hostil dropee un arma con rareza al morir (0.0 - 1.0)
+# Chance that a hostile mob drops a rarity weapon on death (0.0 - 1.0)
 drop-chance: 0.08
