@@ -1,60 +1,60 @@
 # RPGLoot
 
-Plugin de Paper para Minecraft 1.21.4 que añade un sistema de rarezas a armas obtenidas por drop de mobs hostiles.
+Paper plugin for Minecraft 1.21.4 that adds a rarity system to weapons obtained from hostile mob drops.
 
-## Rarezas
+## Rarities
 
-| Rareza | Color | Bonus Stats |
+| Rarity | Color | Bonus Stats |
 |---|---|---|
-| Common | Gris | Ninguno |
-| Uncommon | Amarillo | 1 stat bajo |
-| Rare | Violeta | 1 stat decente |
-| Hero | Verde | 1 stat muy bueno |
-| Legendary | Naranja | 2 stats buenos |
+| Common | Gray | None |
+| Uncommon | Yellow | 1 low stat |
+| Rare | Purple | 1 decent stat |
+| Hero | Green | 1 strong stat |
+| Legendary | Orange | 2 strong stats |
 
-Cada arma mantiene los stats vanilla de Minecraft como base. Las rarezas superiores aplican un multiplicador aleatorio dentro de su rango sobre el daño y velocidad de ataque.
+Each weapon keeps vanilla Minecraft stats as a base. Higher rarities apply a random multiplier within their range to attack damage and attack speed.
 
-## Bonus Stats (armas)
+## Bonus Stats (weapons)
 
-- **Lifesteal** — cura un porcentaje del daño infligido
-- **Crit Chance** — probabilidad de golpe crítico (x1.5 daño)
-- **Knockback** — empuje extra al golpear
-- **Sweep Damage** — daño extra en golpe de área
+- **Lifesteal** — heals a percentage of damage dealt
+- **Crit Chance** — chance to deal a critical hit (x1.5 damage)
+- **Knockback** — extra knockback on hit
+- **Sweep Damage** — bonus damage on sweep attacks
 
-## Obtención
+## How to Obtain
 
-Las armas con rareza solo se obtienen por drop al matar mobs hostiles. La probabilidad de drop es configurable en `config.yml` (por defecto 8%).
+Rarity weapons are only obtainable as drops from hostile mobs. Drop chance is configurable in `config.yml` (default 8%).
 
-## Comandos
+## Commands
 
-| Comando | Descripción |
+| Command | Description |
 |---|---|
-| `/rpgloot get [rareza] [material]` | Genera un arma con la rareza y material indicados |
-| `/rpgloot getall` | Genera una arma de cada rareza |
+| `/rpgloot get [rarity] [material]` | Generate a weapon with the given rarity and material |
+| `/rpgloot getall` | Generate one weapon per rarity |
 
-**Rarezas válidas:** `common`, `uncommon`, `rare`, `hero`, `legendary`
+**Valid rarities:** `common`, `uncommon`, `rare`, `hero`, `legendary`
 
-**Permiso requerido:** `rpgloot.admin`
+**Required permission:** `rpgloot.admin`
 
-## Configuración
+## Configuration
 
 ```yaml
 # config.yml
-drop-chance: 0.08  # 0.0 a 1.0
+drop-chance: 0.08  # 0.0 to 1.0
 ```
 
-## Instalación
+## Installation
 
-1. Descarga `rpgloot.jar` desde [Releases](../../releases)
-2. Cópialo a la carpeta `plugins/` de tu servidor Paper 1.21.4
-3. Reinicia el servidor
+1. Download `rpgloot.jar` from [Releases](../../releases)
+2. Copy it to your Paper 1.21.4 server's `plugins/` folder
+3. Restart the server
 
-## Compilación
+## Building from source
 
-Requiere Java 21 y Maven.
+Requires Java 21 and Maven.
 
 ```bash
 mvn clean package
 ```
 
-El jar se genera en `target/rpgloot.jar`.
+Output jar: `target/rpgloot.jar`
