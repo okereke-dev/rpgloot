@@ -1,0 +1,34 @@
+package com.ricardo.rpgloot;
+
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class RPGLootPlugin extends JavaPlugin {
+
+    private ItemRarityService rarityService;
+
+    @Override
+    public void onEnable() {
+        saveDefaultConfig();
+        Keys.init(this);
+
+        rarityService = new ItemRarityService();
+
+        getServer().getPluginManager().registerEvents(new LootListener(this, rarityService), this);
+        getServer().getPluginManager().registerEvents(new CombatListener(rarityService), this);
+
+        TestCommand testCommand = new TestCommand(rarityService);
+        getCommand("rpgloot").setExecutor(testCommand);
+        getCommand("rpgloot").setTabCompleter(testCommand);
+
+        getLogger().info("RPGLoot habilitado");
+    }
+
+    @Override
+    public void onDisable() {
+        getLogger().info("RPGLoot deshabilitado");
+    }
+
+    public ItemRarityService getRarityService() {
+        return rarityService;
+    }
+}
