@@ -14,10 +14,12 @@ import java.util.Random;
 
 public final class ProjectileListener implements Listener {
 
+    private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final Random random = new Random();
 
-    public ProjectileListener(ItemRarityService rarityService) {
+    public ProjectileListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
+        this.plugin = plugin;
         this.rarityService = rarityService;
     }
 
@@ -105,6 +107,12 @@ public final class ProjectileListener implements Listener {
                     arrow.setPierceLevel(arrow.getPierceLevel() + 1);
                 }
             }
+        }
+
+        if (event.getEntity() instanceof org.bukkit.entity.LivingEntity target) {
+            DamageNumbers.show(plugin,
+                    target.getLocation().add(0, target.getHeight() + 0.3, 0),
+                    event.getFinalDamage(), DamageNumbers.Type.NORMAL);
         }
     }
 

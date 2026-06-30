@@ -5,9 +5,9 @@ import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -26,23 +26,20 @@ public final class CombatListener implements Listener {
         this.rarityService = rarityService;
     }
 
-    @EventHandler
+    // MONITOR priority so we read the final damage value after other plugins resolve it
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player player)) {
-            return;
-        }
-        if (!(event.getEntity() instanceof LivingEntity target)) {
-            return;
-        }
+        if (!(event.getDamager() instanceof Player player)) return;
+        if (!(event.getEntity() instanceof LivingEntity target)) return;
 
         ItemStack weapon = player.getInventory().getItemInMainHand();
         List<RolledStat> stats = rarityService.getBonusStats(weapon);
-        if (stats.isEmpty()) {
-            return;
-        }
+        if (stats.isEmpty()) return;
 
-        // Capture fall distance now — Paper resets it to 0 before the event fires for mace hits
+        // Capture fall distance now — Paper resets it before the event fires for mace hits
         float fallDistance = player.getFallDistance();
+
+        boolean isCrit = false;
 
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
@@ -51,10 +48,13 @@ public final class CombatListener implements Listener {
                     double newHealth = Math.min(player.getHealth() + healAmount,
                             player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
                     player.setHealth(newHealth);
+                    ParticleEffects.lifesteal(player);
+                    DamageNumbers.show(plugin, player.getLocation().add(0, 2.2, 0), healAmount, DamageNumbers.Type.HEAL);
                 }
                 case CRIT_CHANCE -> {
                     if (random.nextDouble() * 100.0 <= rolled.value()) {
                         event.setDamage(event.getDamage() * 1.5);
+                        isCrit = true;
                     }
                 }
                 case KNOCKBACK_BOOST -> {
@@ -66,7 +66,6 @@ public final class CombatListener implements Listener {
                     target.setVelocity(target.getVelocity().add(direction));
                 }
                 case BLEEDING -> {
-                    // Apply damage over time: ticks every second for 3 seconds
                     double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0) / 3.0;
                     new BukkitRunnable() {
                         int ticks = 3;
@@ -76,11 +75,14 @@ public final class CombatListener implements Listener {
                                 return;
                             }
                             target.damage(tickDamage, player);
+                            ParticleEffects.bleedTick(target);
+                            DamageNumbers.show(plugin,
+                                    target.getLocation().add(0, target.getHeight() + 0.3, 0),
+                                    tickDamage, DamageNumbers.Type.BLEED);
                         }
                     }.runTaskTimer(plugin, 20L, 20L);
                 }
                 case RIPTIDE_SPEED -> {
-                    // Boost player velocity when in water or rain
                     if (player.isInWater() || player.isInRain()) {
                         Vector boost = player.getLocation().getDirection().multiply(rolled.value() / 100.0);
                         player.setVelocity(player.getVelocity().add(boost));
@@ -98,13 +100,18 @@ public final class CombatListener implements Listener {
                         double radius = rolled.value();
                         target.getWorld().getNearbyLivingEntities(target.getLocation(), radius).forEach(nearby -> {
                             if (nearby != player && nearby != target) {
-                                nearby.damage(event.getDamage() * 0.5, player);
+                                double splashDmg = event.getDamage() * 0.5;
+                                nearby.damage(splashDmg, player);
                                 Vector knockback = nearby.getLocation().toVector()
                                         .subtract(target.getLocation().toVector())
                                         .normalize().multiply(0.8).setY(0.4);
                                 nearby.setVelocity(knockback);
+                                DamageNumbers.show(plugin,
+                                        nearby.getLocation().add(0, nearby.getHeight() + 0.3, 0),
+                                        splashDmg, DamageNumbers.Type.SMASH);
                             }
                         });
+                        ParticleEffects.smashRing(target.getLocation(), radius);
                     }
                 }
                 case FALL_DAMAGE_BONUS -> {
@@ -114,6 +121,14 @@ public final class CombatListener implements Listener {
                     }
                 }
             }
+        }
+
+        // Show damage number after all stat modifiers are applied
+        Location numberLoc = target.getLocation().add(0, target.getHeight() + 0.3, 0);
+        DamageNumbers.Type numType = isCrit ? DamageNumbers.Type.CRIT : DamageNumbers.Type.NORMAL;
+        DamageNumbers.show(plugin, numberLoc, event.getFinalDamage(), numType);
+        if (isCrit) {
+            ParticleEffects.crit(target.getLocation().add(0, target.getHeight() * 0.5, 0));
         }
     }
 }

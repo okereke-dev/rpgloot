@@ -15,7 +15,7 @@ public class RPGLootPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new LootListener(this, rarityService), this);
         getServer().getPluginManager().registerEvents(new CombatListener(this, rarityService), this);
-        getServer().getPluginManager().registerEvents(new ProjectileListener(rarityService), this);
+        getServer().getPluginManager().registerEvents(new ProjectileListener(this, rarityService), this);
 
         TestCommand testCommand = new TestCommand(rarityService);
         getCommand("rpgloot").setExecutor(testCommand);
