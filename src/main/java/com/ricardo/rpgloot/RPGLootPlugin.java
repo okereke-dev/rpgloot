@@ -11,7 +11,7 @@ public class RPGLootPlugin extends JavaPlugin {
         saveDefaultConfig();
         Keys.init(this);
 
-        rarityService = new ItemRarityService();
+        rarityService = new ItemRarityService(getConfig());
 
         getServer().getPluginManager().registerEvents(new LootListener(this, rarityService), this);
         getServer().getPluginManager().registerEvents(new CombatListener(rarityService), this);

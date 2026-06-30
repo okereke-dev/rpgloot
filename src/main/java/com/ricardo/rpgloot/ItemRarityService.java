@@ -7,6 +7,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -19,6 +20,11 @@ public final class ItemRarityService {
 
     private final Random random = new Random();
     private final WeaponNameGenerator nameGenerator = new WeaponNameGenerator();
+    private final FileConfiguration config;
+
+    public ItemRarityService(FileConfiguration config) {
+        this.config = config;
+    }
 
     public boolean isSupportedWeapon(Material material) {
         return WeaponType.isSupported(material);
@@ -51,7 +57,6 @@ public final class ItemRarityService {
 
         WeaponType weaponType = WeaponType.of(item.getType());
         List<RolledStat> rolledStats = rollBonusStats(rarity, weaponType);
-
         String weaponName = nameGenerator.generate(weaponType);
 
         meta.getPersistentDataContainer().set(Keys.RARITY, PersistentDataType.STRING, rarity.name());
@@ -63,15 +68,24 @@ public final class ItemRarityService {
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(rarity.getDisplayName(), rarity.getColor()).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
-        lore.add(statLine("Attack Damage", damageMultiplier));
-        lore.add(statLine("Attack Speed", speedMultiplier));
+
+        boolean isRanged = weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW;
+        if (isRanged) {
+            lore.add(Component.text("Projectile weapon", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        } else {
+            lore.add(statLine("Attack Damage", damageMultiplier, damageBonus));
+            lore.add(statLine("Attack Speed", speedMultiplier, speedBonus));
+        }
+
         if (!rolledStats.isEmpty()) {
             lore.add(Component.empty());
             for (RolledStat rolled : rolledStats) {
-                lore.add(Component.text(rolled.stat().getLabel() + ": +" + (int) Math.round(rolled.value()) + rolled.stat().getUnit(),
+                lore.add(Component.text(
+                        rolled.stat().getLabel() + ": +" + (int) Math.round(rolled.value()) + rolled.stat().getUnit(),
                         NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
             }
         }
+
         meta.lore(lore);
         meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES);
 
@@ -122,26 +136,28 @@ public final class ItemRarityService {
     private String serializeStats(List<RolledStat> stats) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < stats.size(); i++) {
-            if (i > 0) {
-                builder.append(";");
-            }
+            if (i > 0) builder.append(";");
             builder.append(stats.get(i).serialize());
         }
         return builder.toString();
     }
 
-    private Component statLine(String label, double multiplier) {
-        int percent = Math.round((float) ((multiplier - 1.0) * 100));
-        String sign = percent >= 0 ? "+" : "";
-        return Component.text(label + ": " + sign + percent + "%", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false);
+    private Component statLine(String label, double multiplier, double absoluteBonus) {
+        String display = config.getString("stat-display", "percentage");
+        int percent = (int) Math.round((multiplier - 1.0) * 100);
+        String text;
+
+        switch (display) {
+            case "absolute" -> text = label + ": +" + String.format("%.2f", absoluteBonus);
+            case "mixed"    -> text = label + ": +" + String.format("%.2f", absoluteBonus) + "  (+" + percent + "%)";
+            default         -> text = label + ": +" + percent + "%";  // percentage (default)
+        }
+
+        return Component.text(text, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
     }
 
     private double randomBetween(double min, double max) {
-        if (min >= max) {
-            return min;
-        }
+        if (min >= max) return min;
         return min + random.nextDouble() * (max - min);
     }
-
 }

@@ -1,6 +1,13 @@
 # Chance that a hostile mob drops a rarity weapon on death (0.0 - 1.0)
 drop-chance: 0.08
 
+# How bonus stats are displayed in item lore
+# Options:
+#   percentage — shows relative % increase (e.g. "Attack Damage: +20%")
+#   absolute   — shows flat value increase like vanilla (e.g. "Attack Damage: +1.4")
+#   mixed      — shows both (e.g. "Attack Damage: +1.4  (+20%)")
+stat-display: percentage
+
 # Drop chance per rarity (%) — must add up to 100
 rarity-weights:
   common: 50
