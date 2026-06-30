@@ -26,6 +26,7 @@ public class RPGLootPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        DamageNumbers.cleanup(getServer());
         getLogger().info("RPGLoot disabled");
     }
 

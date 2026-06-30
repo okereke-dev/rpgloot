@@ -12,8 +12,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public final class CombatListener implements Listener {
 
@@ -21,12 +24,14 @@ public final class CombatListener implements Listener {
     private final ItemRarityService rarityService;
     private final Random random = new Random();
 
+    // One active bleed per entity — re-hit cancels the old one and starts fresh
+    private final Map<UUID, BukkitRunnable> activebleeds = new HashMap<>();
+
     public CombatListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
     }
 
-    // MONITOR priority so we read the final damage value after other plugins resolve it
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDamage(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) return;
@@ -38,14 +43,14 @@ public final class CombatListener implements Listener {
 
         // Capture fall distance now — Paper resets it before the event fires for mace hits
         float fallDistance = player.getFallDistance();
-
         boolean isCrit = false;
 
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
                 case LIFESTEAL -> {
                     double healAmount = event.getFinalDamage() * (rolled.value() / 100.0);
-                    double newHealth = Math.min(player.getHealth() + healAmount,
+                    double newHealth = Math.min(
+                            player.getHealth() + healAmount,
                             player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
                     player.setHealth(newHealth);
                     ParticleEffects.lifesteal(player);
@@ -58,19 +63,24 @@ public final class CombatListener implements Listener {
                     }
                 }
                 case KNOCKBACK_BOOST -> {
-                    Vector direction = target.getLocation().toVector()
+                    Vector dir = target.getLocation().toVector()
                             .subtract(player.getLocation().toVector())
                             .normalize()
                             .multiply(rolled.value() * 0.25);
-                    direction.setY(0.3);
-                    target.setVelocity(target.getVelocity().add(direction));
+                    dir.setY(0.3);
+                    target.setVelocity(target.getVelocity().add(dir));
                 }
                 case BLEEDING -> {
+                    // Cancel any existing bleed on this target before starting a new one
+                    BukkitRunnable existing = activebleeds.remove(target.getUniqueId());
+                    if (existing != null) existing.cancel();
+
                     double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0) / 3.0;
-                    new BukkitRunnable() {
+                    BukkitRunnable bleed = new BukkitRunnable() {
                         int ticks = 3;
                         public void run() {
                             if (!target.isValid() || target.isDead() || ticks-- <= 0) {
+                                activebleeds.remove(target.getUniqueId());
                                 cancel();
                                 return;
                             }
@@ -80,7 +90,9 @@ public final class CombatListener implements Listener {
                                     target.getLocation().add(0, target.getHeight() + 0.3, 0),
                                     tickDamage, DamageNumbers.Type.BLEED);
                         }
-                    }.runTaskTimer(plugin, 20L, 20L);
+                    };
+                    activebleeds.put(target.getUniqueId(), bleed);
+                    bleed.runTaskTimer(plugin, 20L, 20L);
                 }
                 case RIPTIDE_SPEED -> {
                     if (player.isInWater() || player.isInRain()) {
@@ -98,19 +110,19 @@ public final class CombatListener implements Listener {
                 case SMASH_RADIUS -> {
                     if (weapon.getType() == Material.MACE) {
                         double radius = rolled.value();
-                        target.getWorld().getNearbyLivingEntities(target.getLocation(), radius).forEach(nearby -> {
-                            if (nearby != player && nearby != target) {
-                                double splashDmg = event.getDamage() * 0.5;
-                                nearby.damage(splashDmg, player);
-                                Vector knockback = nearby.getLocation().toVector()
-                                        .subtract(target.getLocation().toVector())
-                                        .normalize().multiply(0.8).setY(0.4);
-                                nearby.setVelocity(knockback);
-                                DamageNumbers.show(plugin,
-                                        nearby.getLocation().add(0, nearby.getHeight() + 0.3, 0),
-                                        splashDmg, DamageNumbers.Type.SMASH);
-                            }
-                        });
+                        target.getWorld().getNearbyLivingEntities(target.getLocation(), radius)
+                                .forEach(nearby -> {
+                                    if (nearby == player || nearby == target) return;
+                                    double splashDmg = event.getDamage() * 0.5;
+                                    nearby.damage(splashDmg, player);
+                                    Vector kb = nearby.getLocation().toVector()
+                                            .subtract(target.getLocation().toVector())
+                                            .normalize().multiply(0.8).setY(0.4);
+                                    nearby.setVelocity(kb);
+                                    DamageNumbers.show(plugin,
+                                            nearby.getLocation().add(0, nearby.getHeight() + 0.3, 0),
+                                            splashDmg, DamageNumbers.Type.SMASH);
+                                });
                         ParticleEffects.smashRing(target.getLocation(), radius);
                     }
                 }
@@ -123,10 +135,10 @@ public final class CombatListener implements Listener {
             }
         }
 
-        // Show damage number after all stat modifiers are applied
-        Location numberLoc = target.getLocation().add(0, target.getHeight() + 0.3, 0);
-        DamageNumbers.Type numType = isCrit ? DamageNumbers.Type.CRIT : DamageNumbers.Type.NORMAL;
-        DamageNumbers.show(plugin, numberLoc, event.getFinalDamage(), numType);
+        // Main damage number — shown after all modifiers are applied
+        Location numLoc = target.getLocation().add(0, target.getHeight() + 0.3, 0);
+        DamageNumbers.show(plugin, numLoc, event.getFinalDamage(),
+                isCrit ? DamageNumbers.Type.CRIT : DamageNumbers.Type.NORMAL);
         if (isCrit) {
             ParticleEffects.crit(target.getLocation().add(0, target.getHeight() * 0.5, 0));
         }
