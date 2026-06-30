@@ -24,6 +24,14 @@ public enum WeaponType {
     MACE(
             EnumSet.of(Material.MACE),
             EnumSet.of(BonusStat.LIFESTEAL, BonusStat.KNOCKBACK_BOOST, BonusStat.SMASH_RADIUS, BonusStat.FALL_DAMAGE_BONUS)
+    ),
+    BOW(
+            EnumSet.of(Material.BOW),
+            EnumSet.of(BonusStat.ARROW_DAMAGE, BonusStat.FLAME_CHANCE, BonusStat.ARROW_PUNCH, BonusStat.MULTISHOT_CHANCE)
+    ),
+    CROSSBOW(
+            EnumSet.of(Material.CROSSBOW),
+            EnumSet.of(BonusStat.ARROW_DAMAGE, BonusStat.PIERCING_CHANCE, BonusStat.MULTISHOT_CHANCE, BonusStat.CHARGE_SPEED)
     );
 
     private final Set<Material> materials;

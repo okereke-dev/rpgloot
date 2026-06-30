@@ -18,6 +18,7 @@ import java.util.Random;
 public final class ItemRarityService {
 
     private final Random random = new Random();
+    private final WeaponNameGenerator nameGenerator = new WeaponNameGenerator();
 
     public boolean isSupportedWeapon(Material material) {
         return WeaponType.isSupported(material);
@@ -51,12 +52,13 @@ public final class ItemRarityService {
         WeaponType weaponType = WeaponType.of(item.getType());
         List<RolledStat> rolledStats = rollBonusStats(rarity, weaponType);
 
+        String weaponName = nameGenerator.generate(weaponType);
+
         meta.getPersistentDataContainer().set(Keys.RARITY, PersistentDataType.STRING, rarity.name());
         meta.getPersistentDataContainer().set(Keys.BONUS_STATS, PersistentDataType.STRING, serializeStats(rolledStats));
+        meta.getPersistentDataContainer().set(Keys.WEAPON_NAME, PersistentDataType.STRING, weaponName);
 
-        String baseName = item.getType().name().replace("_", " ");
-        baseName = capitalizeWords(baseName);
-        meta.displayName(Component.text(baseName, rarity.getColor()).decoration(TextDecoration.ITALIC, false));
+        meta.displayName(Component.text(weaponName, rarity.getColor()).decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(rarity.getDisplayName(), rarity.getColor()).decoration(TextDecoration.ITALIC, false));
@@ -142,18 +144,4 @@ public final class ItemRarityService {
         return min + random.nextDouble() * (max - min);
     }
 
-    private double round(double value) {
-        return Math.round(value * 10) / 10.0;
-    }
-
-    private String capitalizeWords(String input) {
-        String[] words = input.toLowerCase().split(" ");
-        StringBuilder builder = new StringBuilder();
-        for (String word : words) {
-            if (!word.isEmpty()) {
-                builder.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
-            }
-        }
-        return builder.toString().trim();
-    }
 }

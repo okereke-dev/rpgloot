@@ -14,7 +14,17 @@ public enum BonusStat {
 
     // Mace
     SMASH_RADIUS("Smash Radius", " blk", new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}, new double[]{4, 5}),
-    FALL_DAMAGE_BONUS("Fall Damage Bonus", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70});
+    FALL_DAMAGE_BONUS("Fall Damage Bonus", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70}),
+
+    // Bow
+    ARROW_DAMAGE("Arrow Damage", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+    FLAME_CHANCE("Flame Chance", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+    ARROW_PUNCH("Arrow Punch", " pts", new double[]{1, 1}, new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}),
+    MULTISHOT_CHANCE("Multishot", "%", new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 25}, new double[]{25, 35}),
+
+    // Crossbow
+    PIERCING_CHANCE("Piercing", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+    CHARGE_SPEED("Charge Speed", "%", new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 25}, new double[]{25, 35});
 
     private final String label;
     private final String unit;
