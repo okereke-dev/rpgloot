@@ -81,15 +81,17 @@ public final class CombatListener implements Listener {
                     target.setVelocity(target.getVelocity().add(dir));
                 }
                 case BLEEDING -> {
+                    // rolled.value() is proc chance %
+                    if (random.nextDouble() * 100.0 > rolled.value()) break;
+
                     // Cancel any existing bleed on this target
                     BukkitRunnable existing = activeBleeds.remove(target.getUniqueId());
                     if (existing != null) existing.cancel();
 
-                    // tickDamage = % of hit damage per tick (not divided by duration)
-                    double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0);
-
-                    // Duration varies randomly by rarity
+                    // Damage per tick = weapon base damage × rarity factor (predictable, not hit-dependent)
                     Rarity rarity = rarityService.getRarity(weapon);
+                    double baseDmg = VanillaStats.baseDamage(weapon.getType());
+                    double tickDamage = baseDmg * bleedTickFactor(rarity);
                     int duration = bleedDuration(rarity);
 
                     BukkitRunnable bleed = new BukkitRunnable() {
@@ -102,11 +104,14 @@ public final class CombatListener implements Listener {
                                 cancel();
                                 return;
                             }
+                            // Save velocity — target.damage() applies knockback, we don't want that on bleed ticks
+                            org.bukkit.util.Vector savedVelocity = target.getVelocity().clone();
                             bleedTargets.add(target.getUniqueId());
                             target.damage(tickDamage, player);
                             bleedTargets.remove(target.getUniqueId());
+                            target.setVelocity(savedVelocity);
 
-                            // Reapply Slowness I each tick so it stays exactly as long as the bleed
+                            // Reapply Slowness I so it stays active exactly as long as the bleed
                             target.addPotionEffect(new PotionEffect(
                                     PotionEffectType.SLOWNESS, 25, 0, true, false, false));
 
@@ -170,13 +175,25 @@ public final class CombatListener implements Listener {
 
     /** Random bleed duration in ticks (1 tick = 1 second), scaled by rarity. */
     private int bleedDuration(Rarity rarity) {
-        if (rarity == null) return 2 + random.nextInt(2); // fallback 2–3
+        if (rarity == null) return 2 + random.nextInt(2);
         return switch (rarity) {
-            case UNCOMMON  -> 2 + random.nextInt(2); // 2–3
-            case RARE      -> 2 + random.nextInt(3); // 2–4
-            case HERO      -> 3 + random.nextInt(3); // 3–5
-            case LEGENDARY -> 4 + random.nextInt(3); // 4–6
+            case UNCOMMON  -> 2 + random.nextInt(2); // 2–3s
+            case RARE      -> 2 + random.nextInt(3); // 2–4s
+            case HERO      -> 3 + random.nextInt(3); // 3–5s
+            case LEGENDARY -> 4 + random.nextInt(3); // 4–6s
             default        -> 2;
+        };
+    }
+
+    /** Bleed damage per tick as a fraction of weapon base damage, scaled by rarity. */
+    private double bleedTickFactor(Rarity rarity) {
+        if (rarity == null) return 0.15;
+        return switch (rarity) {
+            case UNCOMMON  -> 0.15; // 15% of base damage/tick
+            case RARE      -> 0.22; // 22%
+            case HERO      -> 0.30; // 30%
+            case LEGENDARY -> 0.40; // 40%
+            default        -> 0.15;
         };
     }
 }

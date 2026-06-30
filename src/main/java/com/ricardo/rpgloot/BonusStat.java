@@ -6,7 +6,8 @@ public enum BonusStat {
     LIFESTEAL("Lifesteal", "%", new double[]{1, 3}, new double[]{3, 6}, new double[]{6, 10}, new double[]{8, 12}),
     CRIT_CHANCE("Crit Chance", "%", new double[]{2, 5}, new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 20}),
     KNOCKBACK_BOOST("Knockback", " pts", new double[]{1, 1}, new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}),
-    BLEEDING("Bleeding", "% dmg/s", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),
+    // Value = proc chance %. Damage per tick is derived from weapon base damage × rarity factor.
+    BLEEDING("Bleeding", "%", new double[]{20, 30}, new double[]{30, 45}, new double[]{45, 60}, new double[]{60, 75}),
 
     // Trident
     RIPTIDE_SPEED("Riptide Speed", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}),

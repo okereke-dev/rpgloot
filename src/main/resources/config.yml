@@ -8,6 +8,9 @@ drop-chance: 0.08
 #   mixed      — shows both (e.g. "Attack Damage: +1.4  (+20%)")
 stat-display: percentage
 
+# Show floating damage numbers in combat (true/false)
+damage-numbers: true
+
 # Drop chance per rarity (%) — must add up to 100
 rarity-weights:
   common: 50

@@ -33,6 +33,7 @@ public final class DamageNumbers {
     private DamageNumbers() {}
 
     public static void show(RPGLootPlugin plugin, Location loc, double amount, Type type) {
+        if (!plugin.getConfig().getBoolean("damage-numbers", true)) return;
         Component text = format(amount, type);
 
         Location spawnLoc = loc.clone().add(
