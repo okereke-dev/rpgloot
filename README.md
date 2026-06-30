@@ -14,3 +14,7 @@ A Paper 1.21.4 plugin that adds an RPG rarity system to weapons. Hostile mobs dr
 ## Documentation
 
 → **[Wiki](../../wiki)**
+
+## SpigotMC
+
+→ **[spigotmc.org/resources/rpgloot.136622](https://www.spigotmc.org/resources/rpgloot.136622/)**
