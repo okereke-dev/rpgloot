@@ -9,6 +9,8 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -16,7 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class CombatListener implements Listener {
 
@@ -24,8 +28,12 @@ public final class CombatListener implements Listener {
     private final ItemRarityService rarityService;
     private final Random random = new Random();
 
-    // One active bleed per entity — re-hit cancels the old one and starts fresh
-    private final Map<UUID, BukkitRunnable> activebleeds = new HashMap<>();
+    // One active bleed runnable per target entity
+    private final Map<UUID, BukkitRunnable> activeBleeds = new HashMap<>();
+
+    // Entities currently receiving a bleed tick — skip these in the event handler
+    // to prevent bleed damage from re-triggering stats
+    private static final Set<UUID> bleedTargets = ConcurrentHashMap.newKeySet();
 
     public CombatListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
@@ -37,11 +45,13 @@ public final class CombatListener implements Listener {
         if (!(event.getDamager() instanceof Player player)) return;
         if (!(event.getEntity() instanceof LivingEntity target)) return;
 
+        // Ignore damage that originates from a bleed tick
+        if (bleedTargets.contains(target.getUniqueId())) return;
+
         ItemStack weapon = player.getInventory().getItemInMainHand();
         List<RolledStat> stats = rarityService.getBonusStats(weapon);
         if (stats.isEmpty()) return;
 
-        // Capture fall distance now — Paper resets it before the event fires for mace hits
         float fallDistance = player.getFallDistance();
         boolean isCrit = false;
 
@@ -71,27 +81,42 @@ public final class CombatListener implements Listener {
                     target.setVelocity(target.getVelocity().add(dir));
                 }
                 case BLEEDING -> {
-                    // Cancel any existing bleed on this target before starting a new one
-                    BukkitRunnable existing = activebleeds.remove(target.getUniqueId());
+                    // Cancel any existing bleed on this target
+                    BukkitRunnable existing = activeBleeds.remove(target.getUniqueId());
                     if (existing != null) existing.cancel();
 
-                    double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0) / 3.0;
+                    // tickDamage = % of hit damage per tick (not divided by duration)
+                    double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0);
+
+                    // Duration varies randomly by rarity
+                    Rarity rarity = rarityService.getRarity(weapon);
+                    int duration = bleedDuration(rarity);
+
                     BukkitRunnable bleed = new BukkitRunnable() {
-                        int ticks = 3;
+                        int remaining = duration;
+
                         public void run() {
-                            if (!target.isValid() || target.isDead() || ticks-- <= 0) {
-                                activebleeds.remove(target.getUniqueId());
+                            if (!target.isValid() || target.isDead() || remaining-- <= 0) {
+                                target.removePotionEffect(PotionEffectType.SLOWNESS);
+                                activeBleeds.remove(target.getUniqueId());
                                 cancel();
                                 return;
                             }
+                            bleedTargets.add(target.getUniqueId());
                             target.damage(tickDamage, player);
+                            bleedTargets.remove(target.getUniqueId());
+
+                            // Reapply Slowness I each tick so it stays exactly as long as the bleed
+                            target.addPotionEffect(new PotionEffect(
+                                    PotionEffectType.SLOWNESS, 25, 0, true, false, false));
+
                             ParticleEffects.bleedTick(target);
                             DamageNumbers.show(plugin,
                                     target.getLocation().add(0, target.getHeight() + 0.3, 0),
                                     tickDamage, DamageNumbers.Type.BLEED);
                         }
                     };
-                    activebleeds.put(target.getUniqueId(), bleed);
+                    activeBleeds.put(target.getUniqueId(), bleed);
                     bleed.runTaskTimer(plugin, 20L, 20L);
                 }
                 case RIPTIDE_SPEED -> {
@@ -135,12 +160,23 @@ public final class CombatListener implements Listener {
             }
         }
 
-        // Main damage number — shown after all modifiers are applied
         Location numLoc = target.getLocation().add(0, target.getHeight() + 0.3, 0);
         DamageNumbers.show(plugin, numLoc, event.getFinalDamage(),
                 isCrit ? DamageNumbers.Type.CRIT : DamageNumbers.Type.NORMAL);
         if (isCrit) {
             ParticleEffects.crit(target.getLocation().add(0, target.getHeight() * 0.5, 0));
         }
+    }
+
+    /** Random bleed duration in ticks (1 tick = 1 second), scaled by rarity. */
+    private int bleedDuration(Rarity rarity) {
+        if (rarity == null) return 2 + random.nextInt(2); // fallback 2–3
+        return switch (rarity) {
+            case UNCOMMON  -> 2 + random.nextInt(2); // 2–3
+            case RARE      -> 2 + random.nextInt(3); // 2–4
+            case HERO      -> 3 + random.nextInt(3); // 3–5
+            case LEGENDARY -> 4 + random.nextInt(3); // 4–6
+            default        -> 2;
+        };
     }
 }
