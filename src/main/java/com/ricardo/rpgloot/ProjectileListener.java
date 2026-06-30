@@ -52,7 +52,8 @@ public final class ProjectileListener implements Listener {
                 }
                 case MULTISHOT_CHANCE -> {
                     if (random.nextDouble() * 100.0 <= rolled.value()) {
-                        // Fire 2 extra arrows spread slightly
+                        String serialized = arrow.getPersistentDataContainer()
+                                .get(Keys.BONUS_STATS, org.bukkit.persistence.PersistentDataType.STRING);
                         for (int i = 0; i < 2; i++) {
                             AbstractArrow extra = arrow.getWorld().spawnArrow(
                                     arrow.getLocation(),
@@ -66,6 +67,10 @@ public final class ProjectileListener implements Listener {
                                     org.bukkit.entity.Arrow.class);
                             extra.setShooter(arrow.getShooter());
                             extra.setDamage(arrow.getDamage());
+                            if (serialized != null) {
+                                extra.getPersistentDataContainer().set(
+                                        Keys.BONUS_STATS, org.bukkit.persistence.PersistentDataType.STRING, serialized);
+                            }
                         }
                     }
                 }

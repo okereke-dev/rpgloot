@@ -72,6 +72,8 @@ public final class ItemRarityService {
         boolean isRanged = weaponType == WeaponType.BOW || weaponType == WeaponType.CROSSBOW;
         if (isRanged) {
             lore.add(Component.text("Projectile weapon", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        } else if (rarity == Rarity.COMMON) {
+            lore.add(Component.text("Vanilla stats", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         } else {
             lore.add(statLine("Attack Damage", damageMultiplier, damageBonus));
             lore.add(statLine("Attack Speed", speedMultiplier, speedBonus));

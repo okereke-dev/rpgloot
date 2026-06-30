@@ -10,12 +10,12 @@ public enum WeaponType {
     SWORD(
             EnumSet.of(Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
                     Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD),
-            EnumSet.of(BonusStat.LIFESTEAL, BonusStat.CRIT_CHANCE, BonusStat.KNOCKBACK_BOOST, BonusStat.SWEEP_BONUS)
+            EnumSet.of(BonusStat.LIFESTEAL, BonusStat.CRIT_CHANCE, BonusStat.KNOCKBACK_BOOST, BonusStat.BLEEDING)
     ),
     AXE(
             EnumSet.of(Material.WOODEN_AXE, Material.STONE_AXE, Material.IRON_AXE,
                     Material.GOLDEN_AXE, Material.DIAMOND_AXE, Material.NETHERITE_AXE),
-            EnumSet.of(BonusStat.LIFESTEAL, BonusStat.CRIT_CHANCE, BonusStat.KNOCKBACK_BOOST, BonusStat.SWEEP_BONUS)
+            EnumSet.of(BonusStat.LIFESTEAL, BonusStat.CRIT_CHANCE, BonusStat.KNOCKBACK_BOOST, BonusStat.BLEEDING)
     ),
     TRIDENT(
             EnumSet.of(Material.TRIDENT),

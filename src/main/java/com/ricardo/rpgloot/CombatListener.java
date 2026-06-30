@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.List;
@@ -16,10 +17,12 @@ import java.util.Random;
 
 public final class CombatListener implements Listener {
 
+    private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final Random random = new Random();
 
-    public CombatListener(ItemRarityService rarityService) {
+    public CombatListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
+        this.plugin = plugin;
         this.rarityService = rarityService;
     }
 
@@ -37,6 +40,9 @@ public final class CombatListener implements Listener {
         if (stats.isEmpty()) {
             return;
         }
+
+        // Capture fall distance now — Paper resets it to 0 before the event fires for mace hits
+        float fallDistance = player.getFallDistance();
 
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
@@ -59,10 +65,19 @@ public final class CombatListener implements Listener {
                     direction.setY(0.3);
                     target.setVelocity(target.getVelocity().add(direction));
                 }
-                case SWEEP_BONUS -> {
-                    if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK) {
-                        event.setDamage(event.getDamage() * (1.0 + rolled.value() / 100.0));
-                    }
+                case BLEEDING -> {
+                    // Apply damage over time: ticks every second for 3 seconds
+                    double tickDamage = event.getFinalDamage() * (rolled.value() / 100.0) / 3.0;
+                    new BukkitRunnable() {
+                        int ticks = 3;
+                        public void run() {
+                            if (!target.isValid() || target.isDead() || ticks-- <= 0) {
+                                cancel();
+                                return;
+                            }
+                            target.damage(tickDamage, player);
+                        }
+                    }.runTaskTimer(plugin, 20L, 20L);
                 }
                 case RIPTIDE_SPEED -> {
                     // Boost player velocity when in water or rain
@@ -93,9 +108,8 @@ public final class CombatListener implements Listener {
                     }
                 }
                 case FALL_DAMAGE_BONUS -> {
-                    if (event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
-                            && player.getFallDistance() > 0) {
-                        double bonus = event.getDamage() * (rolled.value() / 100.0) * (player.getFallDistance() / 5.0);
+                    if (fallDistance > 0) {
+                        double bonus = event.getDamage() * (rolled.value() / 100.0) * (fallDistance / 5.0);
                         event.setDamage(event.getDamage() + bonus);
                     }
                 }
