@@ -1,12 +1,17 @@
 name: RPGLoot
-version: '1.0.0'
+version: '0.2.0'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.21'
 author: Ricardo
-description: RPG rarity system for weapons with randomized mob drops (Common to Legendary)
+description: RPG rarity system for weapons, armor and tools with randomized mob drops (Common to Legendary)
 
 commands:
   rpgloot:
-    description: RPGLoot test commands
-    usage: /rpgloot <get|getall> [rarity] [material]
+    description: RPGLoot admin commands
+    usage: /rpgloot <get|getall|stats> [rarity] [type] [material]
     permission: rpgloot.admin
+
+permissions:
+  rpgloot.admin:
+    description: Access to /rpgloot commands
+    default: op

@@ -7,7 +7,15 @@ public record RolledStat(BonusStat stat, double value) {
     }
 
     public static RolledStat deserialize(String raw) {
-        String[] parts = raw.split(":");
-        return new RolledStat(BonusStat.valueOf(parts[0]), Double.parseDouble(parts[1]));
+        try {
+            String[] parts = raw.split(":", 2);
+            if (parts.length < 2) return null;
+            BonusStat stat = BonusStat.valueOf(parts[0]);
+            double value = Double.parseDouble(parts[1]);
+            return new RolledStat(stat, value);
+        } catch (IllegalArgumentException e) {
+            // Unknown stat name (e.g. from a downgrade) or malformed number — skip silently
+            return null;
+        }
     }
 }

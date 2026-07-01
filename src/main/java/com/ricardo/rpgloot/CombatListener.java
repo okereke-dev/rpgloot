@@ -107,7 +107,12 @@ public final class CombatListener implements Listener {
                             // Save velocity — target.damage() applies knockback, we don't want that on bleed ticks
                             org.bukkit.util.Vector savedVelocity = target.getVelocity().clone();
                             bleedTargets.add(target.getUniqueId());
-                            target.damage(tickDamage, player);
+                            // If attacker disconnected, apply damage without attribution to avoid Player reference issues
+                            if (player.isOnline()) {
+                                target.damage(tickDamage, player);
+                            } else {
+                                target.damage(tickDamage);
+                            }
                             bleedTargets.remove(target.getUniqueId());
                             target.setVelocity(savedVelocity);
 

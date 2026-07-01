@@ -25,7 +25,6 @@ public final class VanillaStats {
     );
 
     // Absolute speed bonus per attack speed multiplier tier (positive = faster)
-    // Vanilla attack speed modifiers are negative (e.g. sword -2.4), so bonus is positive to reduce negativity
     private static final Map<Material, Double> BASE_SPEED = Map.ofEntries(
             Map.entry(Material.WOODEN_SWORD, 2.4),
             Map.entry(Material.STONE_SWORD, 2.4),
@@ -43,8 +42,35 @@ public final class VanillaStats {
             Map.entry(Material.MACE, 3.4)
     );
 
-    private VanillaStats() {
-    }
+    // Vanilla ARMOR attribute value per piece (ADD_NUMBER over base 0)
+    private static final Map<Material, Double> BASE_ARMOR = Map.ofEntries(
+            Map.entry(Material.LEATHER_HELMET, 1.0),
+            Map.entry(Material.LEATHER_CHESTPLATE, 3.0),
+            Map.entry(Material.LEATHER_LEGGINGS, 2.0),
+            Map.entry(Material.LEATHER_BOOTS, 1.0),
+            Map.entry(Material.CHAINMAIL_HELMET, 2.0),
+            Map.entry(Material.CHAINMAIL_CHESTPLATE, 5.0),
+            Map.entry(Material.CHAINMAIL_LEGGINGS, 4.0),
+            Map.entry(Material.CHAINMAIL_BOOTS, 1.0),
+            Map.entry(Material.IRON_HELMET, 2.0),
+            Map.entry(Material.IRON_CHESTPLATE, 6.0),
+            Map.entry(Material.IRON_LEGGINGS, 5.0),
+            Map.entry(Material.IRON_BOOTS, 2.0),
+            Map.entry(Material.GOLDEN_HELMET, 2.0),
+            Map.entry(Material.GOLDEN_CHESTPLATE, 5.0),
+            Map.entry(Material.GOLDEN_LEGGINGS, 3.0),
+            Map.entry(Material.GOLDEN_BOOTS, 1.0),
+            Map.entry(Material.DIAMOND_HELMET, 3.0),
+            Map.entry(Material.DIAMOND_CHESTPLATE, 8.0),
+            Map.entry(Material.DIAMOND_LEGGINGS, 6.0),
+            Map.entry(Material.DIAMOND_BOOTS, 3.0),
+            Map.entry(Material.NETHERITE_HELMET, 3.0),
+            Map.entry(Material.NETHERITE_CHESTPLATE, 8.0),
+            Map.entry(Material.NETHERITE_LEGGINGS, 6.0),
+            Map.entry(Material.NETHERITE_BOOTS, 3.0)
+    );
+
+    private VanillaStats() {}
 
     public static double baseDamage(Material material) {
         return BASE_DAMAGE.getOrDefault(material, 1.0);
@@ -52,5 +78,9 @@ public final class VanillaStats {
 
     public static double baseSpeed(Material material) {
         return BASE_SPEED.getOrDefault(material, 2.4);
+    }
+
+    public static double baseArmor(Material material) {
+        return BASE_ARMOR.getOrDefault(material, 1.0);
     }
 }

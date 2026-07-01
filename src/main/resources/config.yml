@@ -1,11 +1,8 @@
-# Chance that a hostile mob drops a rarity weapon on death (0.0 - 1.0)
+# Chance that a hostile mob drops a rarity item on death (0.0 - 1.0)
 drop-chance: 0.08
 
 # How bonus stats are displayed in item lore
-# Options:
-#   percentage — shows relative % increase (e.g. "Attack Damage: +20%")
-#   absolute   — shows flat value increase like vanilla (e.g. "Attack Damage: +1.4")
-#   mixed      — shows both (e.g. "Attack Damage: +1.4  (+20%)")
+# Options: percentage | absolute | mixed
 stat-display: percentage
 
 # Show floating damage numbers in combat (true/false)
@@ -18,3 +15,30 @@ rarity-weights:
   rare: 13
   hero: 5
   legendary: 2
+
+# Items injected into vanilla structure chests on first generation
+structure-loot:
+  enabled: true
+  # Probability that a recognized structure chest receives an RPGLoot item (0.0 - 1.0)
+  inject-chance: 0.25
+
+# Boss drops — guaranteed RPGLoot weapon on death
+# min-rarity and max-rarity define the rarity range (inclusive)
+boss-drops:
+  enabled: true
+  warden:
+    chance: 1.0
+    min-rarity: RARE
+    max-rarity: LEGENDARY
+  wither:
+    chance: 1.0
+    min-rarity: RARE
+    max-rarity: LEGENDARY
+  elder-guardian:
+    chance: 0.8
+    min-rarity: RARE
+    max-rarity: HERO
+  ender-dragon:
+    chance: 1.0
+    min-rarity: RARE
+    max-rarity: LEGENDARY
