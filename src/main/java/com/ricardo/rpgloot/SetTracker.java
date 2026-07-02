@@ -1,11 +1,16 @@
 package com.ricardo.rpgloot;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -58,6 +63,8 @@ public final class SetTracker {
         } else {
             activeSets.remove(player.getUniqueId());
         }
+
+        refreshAllSetLore(player, best);
     }
 
     /** Returns the active set for a player, or null if none. */
@@ -185,5 +192,67 @@ public final class SetTracker {
                 .get(Keys.RARITY, PersistentDataType.STRING);
         try { return raw == null ? null : Rarity.valueOf(raw); }
         catch (IllegalArgumentException e) { return null; }
+    }
+
+    // ── Set lore highlighting ─────────────────────────────────────────────
+
+    /**
+     * Updates the set section in the lore of every equipped item.
+     * The active piece-count line is highlighted in rarity color + bold;
+     * all others revert to DARK_GRAY.
+     * active may be null (deactivation — all lines go to DARK_GRAY).
+     */
+    private void refreshAllSetLore(Player player, ActiveSet active) {
+        for (ItemStack item : getEquippedItems(player)) {
+            if (item == null || !item.hasItemMeta()) continue;
+            String setName = getSetName(item);
+            if (setName == null) continue;
+            Rarity rarity  = getRarity(item);
+            SetBonus bonus = SetBonus.fromName(setName);
+            if (rarity == null || bonus == null) continue;
+
+            // Determine which piece line (if any) to highlight for this item
+            int highlight = 0;
+            if (active != null
+                    && active.bonus() == bonus
+                    && active.rarity() == rarity
+                    && active.material() == item.getType()) {
+                highlight = active.pieces();
+            }
+            updateSetLoreLines(item, bonus, rarity, highlight);
+        }
+    }
+
+    /** Rewrites the 4 piece-preview lines inside the item's existing lore. */
+    private void updateSetLoreLines(ItemStack item, SetBonus bonus, Rarity rarity, int activePieces) {
+        ItemMeta meta = item.getItemMeta();
+        List<Component> lore = meta.lore();
+        if (lore == null || lore.isEmpty()) return;
+
+        List<Component> updated = new ArrayList<>(lore);
+        var plainSerializer = PlainTextComponentSerializer.plainText();
+
+        for (int i = 0; i < updated.size(); i++) {
+            String text = plainSerializer.serialize(updated.get(i));
+            if (text.contains("◈") && text.contains(bonus.getDisplayName())) {
+                // Lines i+1 through i+4 are the piece previews (2 pcs … 5 pcs)
+                for (int p = 2; p <= 5; p++) {
+                    int idx = i + (p - 1);
+                    if (idx >= updated.size()) break;
+                    boolean isActive = (p == activePieces);
+                    String lineText = "  " + bonus.previewLine(rarity, p);
+                    updated.set(idx, isActive
+                            ? Component.text(lineText, rarity.getColor())
+                                    .decoration(TextDecoration.BOLD, true)
+                                    .decoration(TextDecoration.ITALIC, false)
+                            : Component.text(lineText, NamedTextColor.DARK_GRAY)
+                                    .decoration(TextDecoration.ITALIC, false));
+                }
+                break;
+            }
+        }
+
+        meta.lore(updated);
+        item.setItemMeta(meta);
     }
 }
