@@ -169,6 +169,26 @@ public final class SetTracker {
                 .forEach(attr::removeModifier);
     }
 
+    // ── Material tier ─────────────────────────────────────────────────────
+
+    /**
+     * Maps an item's Material to its base material tier (e.g. DIAMOND_SWORD → DIAMOND,
+     * IRON_HELMET → IRON). Items sharing the same tier count toward the same set group,
+     * so a full diamond armor set + diamond sword all contribute to one set.
+     * Single-material items (TRIDENT, BOW, etc.) return their own name as the tier.
+     */
+    static String getMaterialTier(Material mat) {
+        String name = mat.name();
+        for (String suffix : ITEM_SUFFIXES) {
+            if (name.endsWith(suffix)) return name.substring(0, name.length() - suffix.length());
+        }
+        return name;
+    }
+
+    private static final List<String> ITEM_SUFFIXES = List.of(
+            "_SWORD", "_AXE", "_PICKAXE", "_SHOVEL", "_HOE",
+            "_HELMET", "_CHESTPLATE", "_LEGGINGS", "_BOOTS");
+
     // ── PDC helpers ───────────────────────────────────────────────────────
 
     private String setKey(ItemStack item) {
@@ -177,7 +197,8 @@ public final class SetTracker {
         String name = pdc.get(Keys.SET_NAME, PersistentDataType.STRING);
         String rar  = pdc.get(Keys.RARITY,   PersistentDataType.STRING);
         if (name == null || rar == null) return null;
-        return name + ":" + rar + ":" + item.getType().name();
+        // Group by tier so DIAMOND_HELMET + DIAMOND_SWORD count as the same set
+        return name + ":" + rar + ":" + getMaterialTier(item.getType());
     }
 
     private String getSetName(ItemStack item) {
@@ -216,7 +237,7 @@ public final class SetTracker {
             if (active != null
                     && active.bonus() == bonus
                     && active.rarity() == rarity
-                    && active.material() == item.getType()) {
+                    && getMaterialTier(active.material()).equals(getMaterialTier(item.getType()))) {
                 highlight = active.pieces();
             }
             updateSetLoreLines(item, bonus, rarity, highlight);

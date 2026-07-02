@@ -8,7 +8,7 @@ description: RPG rarity system for weapons, armor and tools with randomized mob 
 commands:
   rpgloot:
     description: RPGLoot admin commands
-    usage: /rpgloot <get|getall|stats|set|reload> [rarity] [type] [material]
+    usage: /rpgloot <get|getall|getset|sets|stats|set|clear|reload>
     permission: rpgloot.command.stats
 
 permissions:
@@ -29,8 +29,11 @@ permissions:
     children:
       rpgloot.command.get: true
       rpgloot.command.getall: true
+      rpgloot.command.getset: true
+      rpgloot.command.sets: true
       rpgloot.command.stats: true
       rpgloot.command.set: true
+      rpgloot.command.clear: true
       rpgloot.command.reload: true
 
   # ── Commands ──────────────────────────────────────────────────────────
@@ -50,6 +53,18 @@ permissions:
   rpgloot.command.set:
     description: Use /rpgloot set to view active set bonus
     default: true
+
+  rpgloot.command.getset:
+    description: Use /rpgloot getset to generate a full matching set
+    default: op
+
+  rpgloot.command.sets:
+    description: Use /rpgloot sets to list available sets
+    default: true
+
+  rpgloot.command.clear:
+    description: Use /rpgloot clear to remove RPGLoot items from inventory
+    default: op
 
   rpgloot.command.reload:
     description: Use /rpgloot reload to reload config.yml

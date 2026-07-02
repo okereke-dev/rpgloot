@@ -49,10 +49,14 @@ public final class ItemRarityService {
     }
 
     public ItemStack applyRarity(ItemStack item, Rarity rarity) {
-        return applyRarity(item, rarity, WeaponType.of(item.getType()));
+        return applyRarity(item, rarity, WeaponType.of(item.getType()), null);
     }
 
     public ItemStack applyRarity(ItemStack item, Rarity rarity, WeaponType type) {
+        return applyRarity(item, rarity, type, null);
+    }
+
+    public ItemStack applyRarity(ItemStack item, Rarity rarity, WeaponType type, SetBonus forcedSet) {
         if (type == null) return item;
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
@@ -86,10 +90,9 @@ public final class ItemRarityService {
             meta.getPersistentDataContainer().set(Keys.ITEM_CATEGORY, PersistentDataType.STRING, "AXE_TOOL");
         }
 
-        // Assign a random set — only weapons and armor pieces belong to sets (not tools)
-        SetBonus setBonus = (type.isWeapon() || type.isArmor())
-                ? SET_POOL[random.nextInt(SET_POOL.length)]
-                : null;
+        // Assign set — forced if specified, otherwise random for weapons/armor (not tools)
+        SetBonus setBonus = forcedSet != null ? forcedSet
+                : (type.isWeapon() || type.isArmor()) ? SET_POOL[random.nextInt(SET_POOL.length)] : null;
         if (setBonus != null) {
             meta.getPersistentDataContainer().set(Keys.SET_NAME, PersistentDataType.STRING, setBonus.getDisplayName());
         }
