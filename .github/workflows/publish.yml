@@ -22,7 +22,7 @@ jobs:
         run: mvn package -q
 
       - name: Publish to Modrinth
-        uses: modrinth/minotaur@v2
+        uses: modrinth/minotaur@v2.0.1
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
           project-id: NmC4gGNc
