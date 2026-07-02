@@ -22,16 +22,30 @@ jobs:
         run: mvn package -q
 
       - name: Publish to Modrinth
-        uses: modrinth/minotaur@v2.9.0
-        with:
-          token: ${{ secrets.MODRINTH_TOKEN }}
-          project-id: NmC4gGNc
-          upload-file: target/rpgloot.jar
-          name: ${{ github.event.release.name }}
-          version-number: ${{ github.event.release.tag_name }}
-          version-type: release
-          game-versions: |
-            26.1.2
-          loaders: |
-            paper
-          changelog: ${{ github.event.release.body }}
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          DATA=$(jq -n \
+            --arg name "$RELEASE_NAME" \
+            --arg version_number "$RELEASE_TAG" \
+            --arg changelog "$RELEASE_BODY" \
+            '{
+              name: $name,
+              version_number: $version_number,
+              changelog: $changelog,
+              dependencies: [],
+              game_versions: ["1.21.4"],
+              version_type: "release",
+              loaders: ["paper"],
+              featured: true,
+              project_id: "NmC4gGNc",
+              file_parts: ["file"]
+            }')
+
+          curl --fail -X POST "https://api.modrinth.com/v2/version" \
+            -H "Authorization: $MODRINTH_TOKEN" \
+            -F "data=$DATA" \
+            -F "file=@target/rpgloot.jar"
