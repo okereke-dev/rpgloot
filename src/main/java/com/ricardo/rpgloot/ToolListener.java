@@ -50,11 +50,13 @@ public final class ToolListener implements Listener {
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
+    private final SetTracker setTracker;
     private final Random random = new Random();
 
-    public ToolListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
+    public ToolListener(RPGLootPlugin plugin, ItemRarityService rarityService, SetTracker setTracker) {
         this.plugin = plugin;
         this.rarityService = rarityService;
+        this.setTracker = setTracker;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -79,7 +81,7 @@ public final class ToolListener implements Listener {
             switch (rolled.stat()) {
                 case FORTUNE_BOOST     -> fortuneBoostPct = rolled.value();
                 case AUTO_SMELT_CHANCE -> smeltChancePct  = rolled.value();
-                case XP_BOOST          -> applyXpBoost(event, rolled.value());
+                case XP_BOOST          -> applyXpBoost(event, player, rolled.value());
                 case REPLANT_CHANCE    -> applyReplant(block, rolled.value());
                 default -> {}
             }
@@ -129,11 +131,11 @@ public final class ToolListener implements Listener {
         }
     }
 
-    private void applyXpBoost(BlockBreakEvent event, double xpBoostPct) {
+    private void applyXpBoost(BlockBreakEvent event, Player player, double xpBoostPct) {
         int baseXp = event.getExpToDrop();
         if (baseXp <= 0) return;
-        double bonus = baseXp * (xpBoostPct / 100.0);
-        event.setExpToDrop(baseXp + (int) Math.round(bonus));
+        double total = xpBoostPct + setTracker.getSetBonus(player, BonusStat.XP_BOOST);
+        event.setExpToDrop(baseXp + (int) Math.round(baseXp * (total / 100.0)));
     }
 
     /** Procs are resolved by the caller; this always executes. fortuneBoostPct may be 0. */

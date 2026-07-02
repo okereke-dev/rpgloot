@@ -35,6 +35,7 @@ public final class SetTracker {
     }
 
     private static final NamespacedKey SET_SPEED_KEY = new NamespacedKey("rpgloot", "set_speed");
+    private static final NamespacedKey SET_LUCK_KEY  = new NamespacedKey("rpgloot", "set_luck");
 
     private final Map<UUID, ActiveSet> activeSets = new HashMap<>();
 
@@ -127,22 +128,36 @@ public final class SetTracker {
     // ── Passive modifier management ───────────────────────────────────────
 
     private void applyPassiveModifiers(Player player, ActiveSet set) {
-        if (set.bonus().getBonusStat() == BonusStat.SPEED_BOOST) {
-            var attr = player.getAttribute(Attribute.MOVEMENT_SPEED);
-            if (attr != null) {
-                // Convert % to movement speed units (base speed ≈ 0.1)
-                double modifier = 0.1 * (set.value() / 100.0);
-                attr.addModifier(new AttributeModifier(
-                        SET_SPEED_KEY, modifier, AttributeModifier.Operation.ADD_NUMBER));
+        switch (set.bonus().getBonusStat()) {
+            case SPEED_BOOST -> {
+                var attr = player.getAttribute(Attribute.MOVEMENT_SPEED);
+                if (attr != null) {
+                    double modifier = 0.1 * (set.value() / 100.0);
+                    attr.addModifier(new AttributeModifier(
+                            SET_SPEED_KEY, modifier, AttributeModifier.Operation.ADD_NUMBER));
+                }
             }
+            case LUCK_BOOST -> {
+                var attr = player.getAttribute(Attribute.LUCK);
+                if (attr != null) {
+                    attr.addModifier(new AttributeModifier(
+                            SET_LUCK_KEY, set.value(), AttributeModifier.Operation.ADD_NUMBER));
+                }
+            }
+            default -> {}
         }
     }
 
     private void removePassiveModifiers(Player player) {
-        var attr = player.getAttribute(Attribute.MOVEMENT_SPEED);
+        removeKey(player, Attribute.MOVEMENT_SPEED, SET_SPEED_KEY);
+        removeKey(player, Attribute.LUCK, SET_LUCK_KEY);
+    }
+
+    private void removeKey(Player player, Attribute attribute, NamespacedKey key) {
+        var attr = player.getAttribute(attribute);
         if (attr == null) return;
         attr.getModifiers().stream()
-                .filter(m -> m.getKey().equals(SET_SPEED_KEY))
+                .filter(m -> m.getKey().equals(key))
                 .toList()
                 .forEach(attr::removeModifier);
     }
