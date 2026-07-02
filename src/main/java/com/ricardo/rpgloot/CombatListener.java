@@ -26,6 +26,7 @@ public final class CombatListener implements Listener {
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
+    private final SetTracker setTracker;
     private final Random random = new Random();
 
     // One active bleed runnable per target entity
@@ -35,9 +36,10 @@ public final class CombatListener implements Listener {
     // to prevent bleed damage from re-triggering stats
     private static final Set<UUID> bleedTargets = ConcurrentHashMap.newKeySet();
 
-    public CombatListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
+    public CombatListener(RPGLootPlugin plugin, ItemRarityService rarityService, SetTracker setTracker) {
         this.plugin = plugin;
         this.rarityService = rarityService;
+        this.setTracker = setTracker;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -58,7 +60,8 @@ public final class CombatListener implements Listener {
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
                 case LIFESTEAL -> {
-                    double healAmount = event.getFinalDamage() * (rolled.value() / 100.0);
+                    double lifestealPct = rolled.value() + setTracker.getSetBonus(player, BonusStat.LIFESTEAL);
+                    double healAmount = event.getFinalDamage() * (lifestealPct / 100.0);
                     double newHealth = Math.min(
                             player.getHealth() + healAmount,
                             player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
@@ -67,7 +70,8 @@ public final class CombatListener implements Listener {
                     DamageNumbers.show(plugin, player.getLocation().add(0, 2.2, 0), healAmount, DamageNumbers.Type.HEAL);
                 }
                 case CRIT_CHANCE -> {
-                    if (random.nextDouble() * 100.0 <= rolled.value()) {
+                    double critPct = rolled.value() + setTracker.getSetBonus(player, BonusStat.CRIT_CHANCE);
+                    if (random.nextDouble() * 100.0 <= critPct) {
                         event.setDamage(event.getDamage() * 1.5);
                         isCrit = true;
                     }
@@ -81,8 +85,9 @@ public final class CombatListener implements Listener {
                     target.setVelocity(target.getVelocity().add(dir));
                 }
                 case BLEEDING -> {
-                    // rolled.value() is proc chance %
-                    if (random.nextDouble() * 100.0 > rolled.value()) break;
+                    double bleedPct = Math.min(
+                            rolled.value() + setTracker.getSetBonus(player, BonusStat.BLEEDING), 75.0);
+                    if (random.nextDouble() * 100.0 > bleedPct) break;
 
                     // Cancel any existing bleed on this target
                     BukkitRunnable existing = activeBleeds.remove(target.getUniqueId());

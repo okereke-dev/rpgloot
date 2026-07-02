@@ -43,6 +43,10 @@ public final class StructureLootListener implements Listener {
         this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
     }
 
+    public void reload() {
+        roller.reload(plugin.getConfig());
+    }
+
     @EventHandler
     public void onLootGenerate(LootGenerateEvent event) {
         if (!plugin.getConfig().getBoolean("structure-loot.enabled", true)) return;

@@ -32,7 +32,8 @@ public enum BonusStat {
     DODGE_CHANCE("Dodge", "%", new double[]{3, 8}, new double[]{8, 15}, new double[]{15, 22}, new double[]{22, 30}),
     DAMAGE_REDUCTION("Damage Reduction", "%", new double[]{2, 5}, new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 20}),
     HEALTH_BOOST("Health Boost", " hp", new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 5}, new double[]{5, 8}),
-    SPEED_BOOST("Speed Boost", "%", new double[]{2, 5}, new double[]{5, 10}, new double[]{10, 15}, new double[]{15, 20}),
+    // Kept low — this is a passive item AttributeModifier that stacks across all worn pieces
+    SPEED_BOOST("Speed Boost", "%", new double[]{1, 2}, new double[]{2, 4}, new double[]{4, 6}, new double[]{6, 8}),
     FALL_REDUCTION("Fall Reduction", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70}),
     NIGHT_VISION_CHANCE("Night Vision", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 45}),
 

@@ -7,24 +7,41 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public final class ItemRarityService {
 
+    private static final SetBonus[] SET_POOL = SetBonus.values();
+
+    // LRU cache — avoids re-parsing the bonus-stat PDC string on every damage event
+    @SuppressWarnings("serial")
+    private final Map<String, List<RolledStat>> statCache = new LinkedHashMap<>(64, 0.75f, true) {
+        @Override protected boolean removeEldestEntry(Map.Entry<String, List<RolledStat>> eldest) {
+            return size() > 512;
+        }
+    };
+
     private final Random random = new Random();
     private final WeaponNameGenerator nameGenerator = new WeaponNameGenerator();
-    private final FileConfiguration config;
+    private final Plugin plugin;
 
-    public ItemRarityService(FileConfiguration config) {
-        this.config = config;
+    public ItemRarityService(Plugin plugin) {
+        this.plugin = plugin;
+    }
+
+    /** Clears the stat-string parse cache after a config reload. */
+    public void clearStatCache() {
+        statCache.clear();
     }
 
     public boolean isSupportedWeapon(Material material) {
@@ -69,6 +86,14 @@ public final class ItemRarityService {
             meta.getPersistentDataContainer().set(Keys.ITEM_CATEGORY, PersistentDataType.STRING, "AXE_TOOL");
         }
 
+        // Assign a random set — only weapons and armor pieces belong to sets (not tools)
+        SetBonus setBonus = (type.isWeapon() || type.isArmor())
+                ? SET_POOL[random.nextInt(SET_POOL.length)]
+                : null;
+        if (setBonus != null) {
+            meta.getPersistentDataContainer().set(Keys.SET_NAME, PersistentDataType.STRING, setBonus.getDisplayName());
+        }
+
         String itemName = nameGenerator.generate(type);
         meta.getPersistentDataContainer().set(Keys.RARITY,      PersistentDataType.STRING, rarity.name());
         meta.getPersistentDataContainer().set(Keys.BONUS_STATS, PersistentDataType.STRING, serializeStats(rolledStats));
@@ -103,6 +128,16 @@ public final class ItemRarityService {
             }
         }
 
+        if (setBonus != null) {
+            lore.add(Component.empty());
+            lore.add(Component.text("◈ " + setBonus.getDisplayName() + " Set", rarity.getColor())
+                    .decoration(TextDecoration.ITALIC, false));
+            for (int p = 2; p <= 5; p++) {
+                lore.add(Component.text("  " + setBonus.previewLine(rarity, p), NamedTextColor.DARK_GRAY)
+                        .decoration(TextDecoration.ITALIC, false));
+            }
+        }
+
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         item.setItemMeta(meta);
@@ -133,19 +168,28 @@ public final class ItemRarityService {
     public Rarity getRarity(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return null;
         String raw = item.getItemMeta().getPersistentDataContainer().get(Keys.RARITY, PersistentDataType.STRING);
-        return raw == null ? null : Rarity.valueOf(raw);
+        if (raw == null) return null;
+        try { return Rarity.valueOf(raw); }
+        catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Unknown rarity value in PDC: '" + raw + "'");
+            return null;
+        }
     }
 
     public List<RolledStat> getBonusStats(ItemStack item) {
         if (item == null || !item.hasItemMeta()) return List.of();
         String raw = item.getItemMeta().getPersistentDataContainer().get(Keys.BONUS_STATS, PersistentDataType.STRING);
         if (raw == null || raw.isBlank()) return List.of();
+        return statCache.computeIfAbsent(raw, this::parseStats);
+    }
+
+    private List<RolledStat> parseStats(String raw) {
         List<RolledStat> stats = new ArrayList<>();
         for (String part : raw.split(";")) {
             RolledStat rs = RolledStat.deserialize(part);
             if (rs != null) stats.add(rs);
         }
-        return stats;
+        return List.copyOf(stats); // immutable — safe to share across callers
     }
 
     public boolean isAxeTool(ItemStack item) {
@@ -178,7 +222,7 @@ public final class ItemRarityService {
     }
 
     private Component statLine(String label, double multiplier, double absoluteBonus) {
-        String display = config.getString("stat-display", "percentage");
+        String display = plugin.getConfig().getString("stat-display", "percentage");
         int percent = (int) Math.round((multiplier - 1.0) * 100);
         String text = switch (display) {
             case "absolute" -> label + ": +" + String.format("%.2f", absoluteBonus);

@@ -100,6 +100,7 @@ public final class ProjectileListener implements Listener {
 
         for (String part : raw.split(";")) {
             RolledStat rolled = RolledStat.deserialize(part);
+            if (rolled == null) continue;
             if (rolled.stat() == BonusStat.ARROW_DAMAGE) {
                 event.setDamage(event.getDamage() * (1.0 + rolled.value() / 100.0));
             } else if (rolled.stat() == BonusStat.PIERCING_CHANCE) {

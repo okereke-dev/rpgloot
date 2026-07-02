@@ -71,14 +71,24 @@ public final class ToolListener implements Listener {
 
         Block block = event.getBlock();
 
+        // Collect FORTUNE_BOOST and AUTO_SMELT_CHANCE first to resolve their conflict:
+        // if smelt procs it takes priority; fortune (if any) then boosts the smelted quantity.
+        double fortuneBoostPct = 0;
+        double smeltChancePct  = 0;
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
-                case FORTUNE_BOOST -> applyFortuneBoost(event, block, rolled.value());
-                case XP_BOOST      -> applyXpBoost(event, rolled.value());
-                case AUTO_SMELT_CHANCE -> applyAutoSmelt(event, player, block, rolled.value());
+                case FORTUNE_BOOST     -> fortuneBoostPct = rolled.value();
+                case AUTO_SMELT_CHANCE -> smeltChancePct  = rolled.value();
+                case XP_BOOST          -> applyXpBoost(event, rolled.value());
                 case REPLANT_CHANCE    -> applyReplant(block, rolled.value());
                 default -> {}
             }
+        }
+
+        if (smeltChancePct > 0 && random.nextDouble() * 100.0 < smeltChancePct) {
+            applyAutoSmelt(event, player, block, fortuneBoostPct); // fortune passed to smelted output
+        } else if (fortuneBoostPct > 0) {
+            applyFortuneBoost(event, block, fortuneBoostPct);
         }
     }
 
@@ -107,17 +117,15 @@ public final class ToolListener implements Listener {
     // ── Stat implementations ──────────────────────────────────────────────
 
     private void applyFortuneBoost(BlockBreakEvent event, Block block, double fortuneBoostPct) {
-        if (random.nextDouble() * 100.0 > fortuneBoostPct) return;
         List<ItemStack> drops = new ArrayList<>(block.getDrops(event.getPlayer().getInventory().getItemInMainHand()));
         if (drops.isEmpty()) return;
         event.setDropItems(false);
-        // Scale drop amount by the stat value: e.g. 35% fortune boost → 1.35× drops
+        // Always scale drops — Fortune Boost is a passive multiplier, not a proc chance
         double multiplier = 1.0 + fortuneBoostPct / 100.0;
         for (ItemStack drop : drops) {
-            ItemStack bonus = drop.clone();
-            int boosted = (int) Math.round(drop.getAmount() * multiplier);
-            bonus.setAmount(Math.min(boosted, drop.getMaxStackSize()));
-            block.getWorld().dropItemNaturally(block.getLocation(), bonus);
+            ItemStack boosted = drop.clone();
+            boosted.setAmount(Math.min((int) Math.round(drop.getAmount() * multiplier), drop.getMaxStackSize()));
+            block.getWorld().dropItemNaturally(block.getLocation(), boosted);
         }
     }
 
@@ -128,18 +136,19 @@ public final class ToolListener implements Listener {
         event.setExpToDrop(baseXp + (int) Math.round(bonus));
     }
 
-    private void applyAutoSmelt(BlockBreakEvent event, Player player, Block block, double smeltChancePct) {
-        if (random.nextDouble() * 100.0 > smeltChancePct) return;
+    /** Procs are resolved by the caller; this always executes. fortuneBoostPct may be 0. */
+    private void applyAutoSmelt(BlockBreakEvent event, Player player, Block block, double fortuneBoostPct) {
         Material smelted = SMELT_MAP.get(block.getType());
         if (smelted == null) return;
 
-        // Replace normal drops with smelted output
         List<ItemStack> drops = new ArrayList<>(block.getDrops(player.getInventory().getItemInMainHand()));
         if (drops.isEmpty()) return;
         event.setDropItems(false);
-        // Drop smelted result (quantity matches first drop)
-        int amount = drops.get(0).getAmount();
-        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(smelted, amount));
+
+        int baseAmount = drops.get(0).getAmount();
+        double multiplier = 1.0 + fortuneBoostPct / 100.0;
+        int finalAmount = Math.min((int) Math.round(baseAmount * multiplier), new ItemStack(smelted).getMaxStackSize());
+        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(smelted, finalAmount));
     }
 
     private void applyReplant(Block block, double replantChancePct) {

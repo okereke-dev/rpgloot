@@ -11,9 +11,20 @@ public final class RarityRoller {
 
     private final Map<Rarity, Integer> normalizedWeights = new EnumMap<>(Rarity.class);
     private final Random random = new Random();
+    private final Logger logger;
 
     public RarityRoller(FileConfiguration config, Logger logger) {
-        // Read raw weights from config
+        this.logger = logger;
+        loadWeights(config);
+    }
+
+    /** Re-reads weights from a freshly reloaded config. */
+    public void reload(FileConfiguration config) {
+        normalizedWeights.clear();
+        loadWeights(config);
+    }
+
+    private void loadWeights(FileConfiguration config) {
         int total = 0;
         for (Rarity r : Rarity.values()) {
             int w = config.getInt("rarity-weights." + r.name().toLowerCase(), r.getDropWeight());
@@ -25,13 +36,11 @@ public final class RarityRoller {
             logger.severe("All rarity-weights are 0 — resetting to defaults.");
             for (Rarity r : Rarity.values()) normalizedWeights.put(r, r.getDropWeight());
         } else if (total != 100) {
-            logger.warning("rarity-weights sum to " + total + " instead of 100 — weights have been normalized automatically.");
-            // Normalize so they sum to 100
+            logger.warning("rarity-weights sum to " + total + " instead of 100 — normalizing automatically.");
             final int rawTotal = total;
             for (Rarity r : Rarity.values()) {
                 normalizedWeights.put(r, (int) Math.round(normalizedWeights.get(r) * 100.0 / rawTotal));
             }
-            // Fix any rounding drift on the most common rarity
             int normalized = normalizedWeights.values().stream().mapToInt(Integer::intValue).sum();
             if (normalized != 100) {
                 normalizedWeights.merge(Rarity.COMMON, 100 - normalized, Integer::sum);

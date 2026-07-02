@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.2.0'
+version: '0.3.0'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.21'
 author: Ricardo
@@ -8,10 +8,67 @@ description: RPG rarity system for weapons, armor and tools with randomized mob 
 commands:
   rpgloot:
     description: RPGLoot admin commands
-    usage: /rpgloot <get|getall|stats> [rarity] [type] [material]
-    permission: rpgloot.admin
+    usage: /rpgloot <get|getall|stats|set|reload> [rarity] [type] [material]
+    permission: rpgloot.command.stats
 
 permissions:
+
+  rpgloot.*:
+    description: Grants all RPGLoot permissions
+    default: false
+    children:
+      rpgloot.admin: true
+      rpgloot.drops: true
+      rpgloot.boss.drops: true
+      rpgloot.sets: true
+      rpgloot.loot.structure: true
+
   rpgloot.admin:
-    description: Access to /rpgloot commands
+    description: Grants all RPGLoot command permissions
     default: op
+    children:
+      rpgloot.command.get: true
+      rpgloot.command.getall: true
+      rpgloot.command.stats: true
+      rpgloot.command.set: true
+      rpgloot.command.reload: true
+
+  # ── Commands ──────────────────────────────────────────────────────────
+
+  rpgloot.command.get:
+    description: Use /rpgloot get to generate items
+    default: op
+
+  rpgloot.command.getall:
+    description: Use /rpgloot getall to generate one item per rarity
+    default: op
+
+  rpgloot.command.stats:
+    description: Use /rpgloot stats to inspect the held item
+    default: true
+
+  rpgloot.command.set:
+    description: Use /rpgloot set to view active set bonus
+    default: true
+
+  rpgloot.command.reload:
+    description: Use /rpgloot reload to reload config.yml
+    default: op
+
+  # ── Features ─────────────────────────────────────────────────────────
+
+  rpgloot.drops:
+    description: Player can receive RPGLoot items from mob drops
+    default: true
+
+  rpgloot.boss.drops:
+    description: Player can receive RPGLoot items from boss drops
+    default: true
+
+  rpgloot.sets:
+    description: Player benefits from set bonuses
+    default: true
+
+  rpgloot.loot.structure:
+    description: Player can find RPGLoot items in structure chests
+    default: true
