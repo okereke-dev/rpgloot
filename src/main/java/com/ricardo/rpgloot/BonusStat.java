@@ -38,10 +38,10 @@ public enum BonusStat {
     NIGHT_VISION_CHANCE("Night Vision", "%", new double[]{5, 10}, new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 45}),
 
     // ── Tools ─────────────────────────────────────────────────────────────
-    FORTUNE_BOOST("Fortune Boost", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70}),
-    XP_BOOST("XP Boost", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70}),
-    AUTO_SMELT_CHANCE("Auto-Smelt", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 70}),
-    REPLANT_CHANCE("Replant", "%", new double[]{20, 35}, new double[]{35, 55}, new double[]{55, 75}, new double[]{75, 90}),
+    FORTUNE_BOOST("Fortune Boost", "%", new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}, new double[]{40, 50}),
+    XP_BOOST("XP Boost", "%", new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}, new double[]{40, 50}),
+    AUTO_SMELT_CHANCE("Auto-Smelt", "%", new double[]{10, 20}, new double[]{20, 30}, new double[]{30, 40}, new double[]{40, 50}),
+    REPLANT_CHANCE("Replant", "%", new double[]{15, 25}, new double[]{25, 35}, new double[]{35, 48}, new double[]{48, 60}),
     LUCK_BOOST("Luck", " pts", new double[]{1, 1}, new double[]{1, 2}, new double[]{2, 3}, new double[]{3, 4}),
     DOUBLE_CATCH_CHANCE("Double Catch", "%", new double[]{10, 20}, new double[]{20, 35}, new double[]{35, 50}, new double[]{50, 65});
 

@@ -24,6 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class CombatListener implements Listener {
 
+    // Hard caps to prevent item + set stat stacking from becoming overpowered
+    private static final double MAX_CRIT_PCT    = 35.0;
+    private static final double MAX_BLEED_PCT   = 60.0;
+
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final SetTracker setTracker;
@@ -70,7 +74,8 @@ public final class CombatListener implements Listener {
                     DamageNumbers.show(plugin, player.getLocation().add(0, 2.2, 0), healAmount, DamageNumbers.Type.HEAL);
                 }
                 case CRIT_CHANCE -> {
-                    double critPct = rolled.value() + setTracker.getSetBonus(player, BonusStat.CRIT_CHANCE);
+                    double critPct = Math.min(
+                            rolled.value() + setTracker.getSetBonus(player, BonusStat.CRIT_CHANCE), MAX_CRIT_PCT);
                     if (random.nextDouble() * 100.0 <= critPct) {
                         event.setDamage(event.getDamage() * 1.5);
                         isCrit = true;
@@ -86,7 +91,7 @@ public final class CombatListener implements Listener {
                 }
                 case BLEEDING -> {
                     double bleedPct = Math.min(
-                            rolled.value() + setTracker.getSetBonus(player, BonusStat.BLEEDING), 75.0);
+                            rolled.value() + setTracker.getSetBonus(player, BonusStat.BLEEDING), MAX_BLEED_PCT);
                     if (random.nextDouble() * 100.0 > bleedPct) break;
 
                     // Cancel any existing bleed on this target
