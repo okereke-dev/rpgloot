@@ -1,10 +1,21 @@
-[![Version](https://img.shields.io/badge/version-0.3.1-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.3.3-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
 
 # ⚔️ RPGLoot
 
 > Transform your vanilla server into an RPG loot experience — without replacing the game your players already love.
 
 Hostile mobs, bosses, and ancient structures now drop weapons, armor, and tools with **randomized rarity tiers**, **unique generated names**, and **hand-crafted bonus stats**. Everything stacks naturally with vanilla mechanics — enchantments, attributes, and loot tables all work exactly as expected. Drop it in, restart, done.
+
+---
+
+## 🌱 Vanilla-First Design
+
+RPGLoot is built to be a **complement**, not an overhaul. It was reviewed against other RPG-loot plugins specifically to avoid the common pitfalls — uncapped stat stacking, PvP-breaking power creep, and conflicts with other plugins' attributes.
+
+- **Hard caps on every stackable stat** — Dodge (50%), Damage Reduction (60%), Fall Reduction (80%), Crit Chance (35%), Bleeding (60%). No combination of item + set bonuses can exceed these, ever.
+- **`stats-enabled: false`** — a one-line config flip that turns RPGLoot into a **pure cosmetic rarity layer**. Items keep their generated name, color, and rarity tag but grant zero attribute bonuses, zero bonus stats, zero set bonuses. Vanilla combat stays completely untouched.
+- **Fully tunable power level** — every rarity multiplier and bonus-stat range lives in `config.yml`, not hardcoded. Want a subtler experience? Turn the numbers down. Want more power? Turn them up. No recompiling required.
+- **Real vanilla attributes, not fake NBT** — stat bonuses use Bukkit's native `AttributeModifier` system, the same one vanilla enchantments use, so RPGLoot plays nicely with other plugins instead of fighting them.
 
 ---
 
@@ -63,6 +74,8 @@ Items roll **1–3 bonus stats** from a curated pool per item type. No filler �
 | Replant Chance | Auto-replant harvested crops (Hoe) |
 | Double Catch | Chance for double fish loot |
 | Luck Boost | Increased fishing luck |
+
+> Stacking-sensitive stats are hard-capped regardless of item + set combinations: **Crit Chance ≤ 35%** · **Bleeding ≤ 60%** · **Dodge ≤ 50%** · **Damage Reduction ≤ 60%** · **Fall Reduction ≤ 80%**.
 
 ---
 
@@ -134,23 +147,35 @@ Every hit tells a story:
 Everything is tunable in `config.yml` — no recompile needed:
 
 ```yaml
-# Drop chances
-drop-chance: 0.15
-boss-drop-chance: 1.0
+# Pure cosmetic mode — no stat/attribute changes at all
+stats-enabled: true
 
-# Rarity weights (higher = more common)
+# Drop chance per hostile mob kill
+drop-chance: 0.08
+
+# Rarity weights (higher = more common) — auto-normalized to 100
 rarity-weights:
-  COMMON: 50
-  UNCOMMON: 25
-  RARE: 15
-  HERO: 7
-  LEGENDARY: 3
+  common: 50
+  uncommon: 30
+  rare: 13
+  hero: 5
+  legendary: 2
 
 # Structure loot
-structure-loot-chance: 0.25
+structure-loot:
+  enabled: true
+  inject-chance: 0.25
+
+# Rarity damage/speed multipliers — fully overridable
+rarity-multipliers:
+  LEGENDARY: { damage: [1.30, 1.40], speed: [1.10, 1.20] }
+
+# Bonus stat value ranges — fully overridable, one entry per stat
+bonus-stat-ranges:
+  CRIT_CHANCE: { uncommon: [2,5], rare: [5,10], hero: [10,15], legendary: [15,20] }
 ```
 
-Per-mob overrides, multiplier ranges per rarity tier, and boss minimum rarity are all configurable.
+Per-mob material tiers, boss minimum rarity, and every rarity/stat range shown above ship pre-populated with the tested defaults and can be freely retuned.
 
 ---
 
