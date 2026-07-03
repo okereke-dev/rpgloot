@@ -7,6 +7,9 @@ jobs:
   update-docs:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Update Hangar project page
         env:
           HANGAR_TOKEN: ${{ secrets.HANGAR_TOKEN }}
@@ -15,132 +18,14 @@ jobs:
             "https://hangar.papermc.io/api/v1/authenticate?apiKey=$HANGAR_TOKEN" \
             -H "User-Agent: rpgloot-ci" | jq -r '.token')
 
-          CONTENT='# RPGLoot
-
-Transform your vanilla server into an RPG loot experience — without replacing the game your players already love.
-
-Hostile mobs, bosses, and ancient structures now drop weapons, armor, and tools with **randomized rarity tiers**, **unique generated names**, and **hand-crafted bonus stats**. Everything stacks naturally with vanilla mechanics — enchantments, attributes, and loot tables all work exactly as expected.
-
----
-
-## ✦ Rarity System
-
-Every dropped item rolls one of **5 rarity tiers**, each with scaled stat multipliers and a distinct color:
-
-| Rarity | Color | Drop Weight |
-|---|---|---|
-| Common | Gray | High |
-| Uncommon | Green | Medium |
-| Rare | Blue | Low |
-| Hero | Gold | Very Low |
-| Legendary | Red/Purple | Rare |
-
-Higher rarities deal more damage, offer better defense, and roll stronger bonus stats.
-
----
-
-## ✦ Bonus Stats
-
-Each item rolls **1–3 bonus stats** from a pool specific to its type:
-
-**Weapons** — Lifesteal · Crit Chance · Bleeding · Knockback Boost · Smash Radius · Lightning Strike · Riptide Speed · Fall Damage Bonus
-
-**Armor** — Health Boost · Dodge Chance · Damage Reduction · Speed Boost · Thorns · Night Vision · Fall Reduction
-
-**Tools** — Fortune Boost · XP Boost · Auto-Smelt · Replant Chance · Double Catch · Luck Boost
-
----
-
-## ✦ Set Bonus System
-
-Every weapon and armor piece belongs to one of **8 named sets**. Equip **2–5 matching pieces** (same set name + rarity + material) to unlock scaling bonuses:
-
-| Pieces | Bonus |
-|---|---|
-| 2 | 30% |
-| 3 | 55% |
-| 4 | 75% |
-| 5 | 100% + Special |
-
-| Set | Bonus |
-|---|---|
-| **Shadowveil** | Dodge Chance |
-| **Ironbound** | Damage Reduction |
-| **Dawnbreaker** | Crit Chance |
-| **Tidecaller** | Lifesteal |
-| **Emberclaw** | Bleeding Chance |
-| **Stormwarden** | Speed Boost |
-| **Voidwalker** | XP Boost |
-| **Gilded** | Luck |
-
-Active piece count is highlighted live in the item lore. Set bonuses stack additively with individual item stats.
-
----
-
-## ✦ Drop Sources
-
-- **Hostile mobs** — configurable drop chance per mob type, material tier scales with difficulty zone
-- **Boss mobs** (Elder Guardian, Wither, Ender Dragon, Warden) — guaranteed drop with configurable minimum rarity
-- **Vanilla structures** — strongholds, bastions, end cities, and more have a chance to contain RPGLoot weapons
-
----
-
-## ✦ Combat Feedback
-
-- Floating damage numbers above entities (Normal / Crit / Bleed / Heal / Smash)
-- Particle effects for crits, lifesteal, bleeding ticks, and mace smash rings
-
----
-
-## ✦ Commands
-
-| Command | Description |
-|---|---|
-| `/rpgloot stats` | Inspect the held item'"'"'s rarity and stats |
-| `/rpgloot set` | View your active set bonus |
-| `/rpgloot sets <name>` | Browse full value tables for any set |
-| `/rpgloot get [type] [rarity]` | Generate a specific item (admin) |
-| `/rpgloot getset <set> <rarity> <tier>` | Generate a full matching set (admin) |
-| `/rpgloot getall` | Get one item per rarity (admin) |
-| `/rpgloot clear` | Remove all RPGLoot items from inventory (admin) |
-| `/rpgloot reload` | Reload config.yml (admin) |
-
----
-
-## ✦ Configuration
-
-Everything is tunable via `config.yml`:
-
-- Global drop chance and per-mob overrides
-- Rarity weight distribution
-- Damage / speed / defense multiplier ranges per rarity
-- Boss drop minimum rarity per boss type
-- Structure loot chance
-- Floating damage number toggle
-
----
-
-## ✦ Compatibility
-
-- **Paper 1.20.4 – 26.1.2**
-- No dependencies · No database · Drop-in install
-
----
-
-## Installation
-
-1. Drop `rpgloot.jar` into your `plugins/` folder
-2. Restart the server
-3. Done — mobs start dropping loot immediately
-
-Full documentation: [Wiki](https://github.com/okereke-dev/rpgloot/wiki)'
+          echo "JWT prefix: ${JWT:0:20}..."
 
           RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X PATCH \
             "https://hangar.papermc.io/api/v1/pages/edit/okereke-dev/RPGLoot" \
             -H "Authorization: HangarAuth $JWT" \
             -H "User-Agent: rpgloot-ci" \
             -H "Content-Type: application/json" \
-            -d "{\"name\": \"Resource Page\", \"content\": $(echo "$CONTENT" | jq -Rs .)}")
+            -d "{\"name\": \"Resource Page\", \"content\": $(jq -Rs . < .github/hangar-description.md)}")
 
           echo "$RESPONSE"
           HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
