@@ -5,7 +5,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
@@ -39,8 +38,8 @@ public final class SetTracker {
         }
     }
 
-    private static final NamespacedKey SET_SPEED_KEY = new NamespacedKey("rpgloot", "set_speed");
-    private static final NamespacedKey SET_LUCK_KEY  = new NamespacedKey("rpgloot", "set_luck");
+    private static final UUID SET_SPEED_UUID = UUID.nameUUIDFromBytes("rpgloot:set_speed".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    private static final UUID SET_LUCK_UUID  = UUID.nameUUIDFromBytes("rpgloot:set_luck".getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
     private final Map<UUID, ActiveSet> activeSets = new HashMap<>();
 
@@ -137,18 +136,18 @@ public final class SetTracker {
     private void applyPassiveModifiers(Player player, ActiveSet set) {
         switch (set.bonus().getBonusStat()) {
             case SPEED_BOOST -> {
-                var attr = player.getAttribute(Attribute.MOVEMENT_SPEED);
+                var attr = player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED);
                 if (attr != null) {
                     double modifier = 0.1 * (set.value() / 100.0);
                     attr.addModifier(new AttributeModifier(
-                            SET_SPEED_KEY, modifier, AttributeModifier.Operation.ADD_NUMBER));
+                            SET_SPEED_UUID, "rpgloot:set_speed", modifier, AttributeModifier.Operation.ADD_NUMBER));
                 }
             }
             case LUCK_BOOST -> {
-                var attr = player.getAttribute(Attribute.LUCK);
+                var attr = player.getAttribute(Attribute.GENERIC_LUCK);
                 if (attr != null) {
                     attr.addModifier(new AttributeModifier(
-                            SET_LUCK_KEY, set.value(), AttributeModifier.Operation.ADD_NUMBER));
+                            SET_LUCK_UUID, "rpgloot:set_luck", set.value(), AttributeModifier.Operation.ADD_NUMBER));
                 }
             }
             default -> {}
@@ -156,15 +155,15 @@ public final class SetTracker {
     }
 
     private void removePassiveModifiers(Player player) {
-        removeKey(player, Attribute.MOVEMENT_SPEED, SET_SPEED_KEY);
-        removeKey(player, Attribute.LUCK, SET_LUCK_KEY);
+        removeByUuid(player, Attribute.GENERIC_MOVEMENT_SPEED, SET_SPEED_UUID);
+        removeByUuid(player, Attribute.GENERIC_LUCK, SET_LUCK_UUID);
     }
 
-    private void removeKey(Player player, Attribute attribute, NamespacedKey key) {
+    private void removeByUuid(Player player, Attribute attribute, UUID uuid) {
         var attr = player.getAttribute(attribute);
         if (attr == null) return;
         attr.getModifiers().stream()
-                .filter(m -> m.getKey().equals(key))
+                .filter(m -> m.getUniqueId().equals(uuid))
                 .toList()
                 .forEach(attr::removeModifier);
     }

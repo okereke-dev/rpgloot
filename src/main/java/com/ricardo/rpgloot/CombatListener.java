@@ -64,7 +64,7 @@ public final class CombatListener implements Listener {
                     double healAmount = event.getFinalDamage() * (lifestealPct / 100.0);
                     double newHealth = Math.min(
                             player.getHealth() + healAmount,
-                            player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue());
+                            player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_MAX_HEALTH).getValue());
                     player.setHealth(newHealth);
                     ParticleEffects.lifesteal(player);
                     DamageNumbers.show(plugin, player.getLocation().add(0, 2.2, 0), healAmount, DamageNumbers.Type.HEAL);
@@ -104,7 +104,7 @@ public final class CombatListener implements Listener {
 
                         public void run() {
                             if (!target.isValid() || target.isDead() || remaining-- <= 0) {
-                                target.removePotionEffect(PotionEffectType.SLOWNESS);
+                                target.removePotionEffect(PotionEffectType.SLOW);
                                 activeBleeds.remove(target.getUniqueId());
                                 cancel();
                                 return;
@@ -123,7 +123,7 @@ public final class CombatListener implements Listener {
 
                             // Reapply Slowness I so it stays active exactly as long as the bleed
                             target.addPotionEffect(new PotionEffect(
-                                    PotionEffectType.SLOWNESS, 25, 0, true, false, false));
+                                    PotionEffectType.SLOW, 25, 0, true, false, false));
 
                             ParticleEffects.bleedTick(target);
                             DamageNumbers.show(plugin,
@@ -148,7 +148,8 @@ public final class CombatListener implements Listener {
                     }
                 }
                 case SMASH_RADIUS -> {
-                    if (weapon.getType() == Material.MACE) {
+                    Material maceType = Material.getMaterial("MACE");
+                    if (maceType != null && weapon.getType() == maceType) {
                         double radius = rolled.value();
                         target.getWorld().getNearbyLivingEntities(target.getLocation(), radius)
                                 .forEach(nearby -> {

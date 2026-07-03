@@ -2,6 +2,7 @@ package com.ricardo.rpgloot;
 
 import org.bukkit.Material;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public enum WeaponType {
             Category.WEAPON
     ),
     MACE(
-            EnumSet.of(Material.MACE),
+            buildMaceMaterials(),
             EnumSet.of(BonusStat.LIFESTEAL, BonusStat.KNOCKBACK_BOOST, BonusStat.SMASH_RADIUS, BonusStat.FALL_DAMAGE_BONUS),
             Category.WEAPON
     ),
@@ -113,6 +114,12 @@ public enum WeaponType {
     public Set<Material> getMaterials() { return materials; }
     public Set<BonusStat> getBonusPool() { return bonusPool; }
     public Category getCategory() { return category; }
+
+    @SuppressWarnings("unchecked")
+    private static Set<Material> buildMaceMaterials() {
+        Material mace = Material.getMaterial("MACE");
+        return mace != null ? EnumSet.of(mace) : Collections.emptySet();
+    }
 
     public boolean isWeapon() { return category == Category.WEAPON; }
     public boolean isArmor()  { return category == Category.ARMOR; }

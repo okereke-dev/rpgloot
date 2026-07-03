@@ -2,45 +2,55 @@ package com.ricardo.rpgloot;
 
 import org.bukkit.Material;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class VanillaStats {
 
     // Vanilla ADD_NUMBER bonus for ATTACK_DAMAGE (base entity value is 1.0)
-    private static final Map<Material, Double> BASE_DAMAGE = Map.ofEntries(
-            Map.entry(Material.WOODEN_SWORD, 4.0),
-            Map.entry(Material.STONE_SWORD, 5.0),
-            Map.entry(Material.IRON_SWORD, 6.0),
-            Map.entry(Material.GOLDEN_SWORD, 4.0),
-            Map.entry(Material.DIAMOND_SWORD, 7.0),
-            Map.entry(Material.NETHERITE_SWORD, 8.0),
-            Map.entry(Material.WOODEN_AXE, 6.0),
-            Map.entry(Material.STONE_AXE, 8.0),
-            Map.entry(Material.IRON_AXE, 8.0),
-            Map.entry(Material.GOLDEN_AXE, 6.0),
-            Map.entry(Material.DIAMOND_AXE, 8.0),
-            Map.entry(Material.NETHERITE_AXE, 9.0),
-            Map.entry(Material.TRIDENT, 8.0),
-            Map.entry(Material.MACE, 5.0)
-    );
+    private static final Map<Material, Double> BASE_DAMAGE;
+    static {
+        Map<Material, Double> m = new HashMap<>();
+        m.put(Material.WOODEN_SWORD, 4.0);
+        m.put(Material.STONE_SWORD,  5.0);
+        m.put(Material.IRON_SWORD,   6.0);
+        m.put(Material.GOLDEN_SWORD, 4.0);
+        m.put(Material.DIAMOND_SWORD,    7.0);
+        m.put(Material.NETHERITE_SWORD,  8.0);
+        m.put(Material.WOODEN_AXE,  6.0);
+        m.put(Material.STONE_AXE,   8.0);
+        m.put(Material.IRON_AXE,    8.0);
+        m.put(Material.GOLDEN_AXE,  6.0);
+        m.put(Material.DIAMOND_AXE,   8.0);
+        m.put(Material.NETHERITE_AXE, 9.0);
+        m.put(Material.TRIDENT, 8.0);
+        Material mace = Material.getMaterial("MACE");
+        if (mace != null) m.put(mace, 5.0);
+        BASE_DAMAGE = Collections.unmodifiableMap(m);
+    }
 
     // Absolute speed bonus per attack speed multiplier tier (positive = faster)
-    private static final Map<Material, Double> BASE_SPEED = Map.ofEntries(
-            Map.entry(Material.WOODEN_SWORD, 2.4),
-            Map.entry(Material.STONE_SWORD, 2.4),
-            Map.entry(Material.IRON_SWORD, 2.4),
-            Map.entry(Material.GOLDEN_SWORD, 2.4),
-            Map.entry(Material.DIAMOND_SWORD, 2.4),
-            Map.entry(Material.NETHERITE_SWORD, 2.4),
-            Map.entry(Material.WOODEN_AXE, 3.2),
-            Map.entry(Material.STONE_AXE, 3.2),
-            Map.entry(Material.IRON_AXE, 3.1),
-            Map.entry(Material.GOLDEN_AXE, 3.2),
-            Map.entry(Material.DIAMOND_AXE, 3.0),
-            Map.entry(Material.NETHERITE_AXE, 2.9),
-            Map.entry(Material.TRIDENT, 2.9),
-            Map.entry(Material.MACE, 3.4)
-    );
+    private static final Map<Material, Double> BASE_SPEED;
+    static {
+        Map<Material, Double> m = new HashMap<>();
+        m.put(Material.WOODEN_SWORD,   2.4);
+        m.put(Material.STONE_SWORD,    2.4);
+        m.put(Material.IRON_SWORD,     2.4);
+        m.put(Material.GOLDEN_SWORD,   2.4);
+        m.put(Material.DIAMOND_SWORD,  2.4);
+        m.put(Material.NETHERITE_SWORD, 2.4);
+        m.put(Material.WOODEN_AXE,  3.2);
+        m.put(Material.STONE_AXE,   3.2);
+        m.put(Material.IRON_AXE,    3.1);
+        m.put(Material.GOLDEN_AXE,  3.2);
+        m.put(Material.DIAMOND_AXE,   3.0);
+        m.put(Material.NETHERITE_AXE, 2.9);
+        m.put(Material.TRIDENT, 2.9);
+        Material mace = Material.getMaterial("MACE");
+        if (mace != null) m.put(mace, 3.4);
+        BASE_SPEED = Collections.unmodifiableMap(m);
+    }
 
     // Vanilla ARMOR attribute value per piece (ADD_NUMBER over base 0)
     private static final Map<Material, Double> BASE_ARMOR = Map.ofEntries(

@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.plugin.Plugin;
@@ -13,11 +12,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 public final class ItemRarityService {
 
@@ -70,17 +71,17 @@ public final class ItemRarityService {
         if (type.isWeapon() && !isRanged(type)) {
             double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
             double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
-            if (damageBonus > 0) meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, new AttributeModifier(
-                    new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_damage"),
-                    damageBonus, AttributeModifier.Operation.ADD_NUMBER));
-            if (speedBonus > 0) meta.addAttributeModifier(Attribute.ATTACK_SPEED, new AttributeModifier(
-                    new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_speed"),
-                    speedBonus, AttributeModifier.Operation.ADD_NUMBER));
+            if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_damage", damageBonus, AttributeModifier.Operation.ADD_NUMBER));
+            if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_speed", speedBonus, AttributeModifier.Operation.ADD_NUMBER));
         } else if (type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
-            if (defenseBonus > 0) meta.addAttributeModifier(Attribute.ARMOR, new AttributeModifier(
-                    new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_armor"),
-                    defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
+            if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_armor", defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> rolledStats = rollBonusStats(rarity, type);
@@ -152,15 +153,15 @@ public final class ItemRarityService {
     private void applyPassiveAttributes(ItemMeta meta, List<RolledStat> stats) {
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
-                case HEALTH_BOOST -> meta.addAttributeModifier(Attribute.MAX_HEALTH, new AttributeModifier(
-                        new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_health"),
-                        rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
-                case SPEED_BOOST -> meta.addAttributeModifier(Attribute.MOVEMENT_SPEED, new AttributeModifier(
-                        new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_speed_armor"),
-                        0.1 * (rolled.value() / 100.0), AttributeModifier.Operation.ADD_NUMBER));
-                case LUCK_BOOST -> meta.addAttributeModifier(Attribute.LUCK, new AttributeModifier(
-                        new NamespacedKey(Keys.RARITY.getNamespace(), "rpgloot_luck"),
-                        rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
+                case HEALTH_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_MAX_HEALTH, new AttributeModifier(
+                        UUID.nameUUIDFromBytes("rpgloot_health".getBytes(StandardCharsets.UTF_8)),
+                        "rpgloot_health", rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
+                case SPEED_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_MOVEMENT_SPEED, new AttributeModifier(
+                        UUID.nameUUIDFromBytes("rpgloot_speed_armor".getBytes(StandardCharsets.UTF_8)),
+                        "rpgloot_speed_armor", 0.1 * (rolled.value() / 100.0), AttributeModifier.Operation.ADD_NUMBER));
+                case LUCK_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_LUCK, new AttributeModifier(
+                        UUID.nameUUIDFromBytes("rpgloot_luck".getBytes(StandardCharsets.UTF_8)),
+                        "rpgloot_luck", rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
                 default -> {}
             }
         }

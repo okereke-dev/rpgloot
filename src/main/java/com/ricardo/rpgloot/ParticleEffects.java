@@ -17,7 +17,7 @@ public final class ParticleEffects {
     public static void bleedTick(LivingEntity target) {
         Location loc = target.getLocation().add(0, target.getHeight() * 0.8, 0);
         Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(180, 0, 0), 1.2f);
-        loc.getWorld().spawnParticle(Particle.DUST, loc, 3, 0.15, 0.1, 0.15, red);
+        loc.getWorld().spawnParticle(Particle.REDSTONE, loc, 3, 0.15, 0.1, 0.15, red);
     }
 
     public static void lifesteal(Player player) {
@@ -32,7 +32,7 @@ public final class ParticleEffects {
             double x = center.getX() + radius * Math.cos(angle);
             double z = center.getZ() + radius * Math.sin(angle);
             Location point = new Location(center.getWorld(), x, center.getY() + 0.1, z);
-            center.getWorld().spawnParticle(Particle.POOF, point, 2, 0.05, 0.05, 0.05, 0.02);
+            center.getWorld().spawnParticle(Particle.EXPLOSION_NORMAL, point, 2, 0.05, 0.05, 0.05, 0.02);
         }
     }
 }

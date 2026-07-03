@@ -2,6 +2,9 @@ package com.ricardo.rpgloot;
 
 import org.bukkit.Material;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,12 +22,18 @@ public final class ItemPools {
 
     // ── Full pools (T4 / unrestricted) ────────────────────────────────────
 
-    public static final List<Material> WEAPONS = List.of(
-            Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
-            Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
-            Material.WOODEN_AXE,   Material.STONE_AXE,   Material.IRON_AXE,
-            Material.GOLDEN_AXE,   Material.DIAMOND_AXE,  Material.NETHERITE_AXE,
-            Material.TRIDENT, Material.MACE, Material.BOW, Material.CROSSBOW);
+    public static final List<Material> WEAPONS;
+    static {
+        List<Material> list = new ArrayList<>(Arrays.asList(
+                Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
+                Material.GOLDEN_SWORD, Material.DIAMOND_SWORD, Material.NETHERITE_SWORD,
+                Material.WOODEN_AXE,   Material.STONE_AXE,   Material.IRON_AXE,
+                Material.GOLDEN_AXE,   Material.DIAMOND_AXE,  Material.NETHERITE_AXE,
+                Material.TRIDENT, Material.BOW, Material.CROSSBOW));
+        Material mace = Material.getMaterial("MACE");
+        if (mace != null) list.add(mace);
+        WEAPONS = Collections.unmodifiableList(list);
+    }
 
     public static final List<Material> ARMOR = List.of(
             Material.LEATHER_HELMET,    Material.LEATHER_CHESTPLATE,    Material.LEATHER_LEGGINGS,    Material.LEATHER_BOOTS,
@@ -54,13 +63,19 @@ public final class ItemPools {
             Material.WOODEN_AXE,   Material.STONE_AXE,   Material.IRON_AXE,   Material.GOLDEN_AXE,
             Material.BOW, Material.CROSSBOW, Material.TRIDENT);
 
-    /** T3 ceiling: Diamond. Nether mobs. Mace added here. */
-    public static final List<Material> WEAPONS_T3 = List.of(
-            Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
-            Material.GOLDEN_SWORD, Material.DIAMOND_SWORD,
-            Material.WOODEN_AXE,   Material.STONE_AXE,   Material.IRON_AXE,
-            Material.GOLDEN_AXE,   Material.DIAMOND_AXE,
-            Material.BOW, Material.CROSSBOW, Material.TRIDENT, Material.MACE);
+    /** T3 ceiling: Diamond. Nether mobs. Mace added here (when available). */
+    public static final List<Material> WEAPONS_T3;
+    static {
+        List<Material> list = new ArrayList<>(Arrays.asList(
+                Material.WOODEN_SWORD, Material.STONE_SWORD, Material.IRON_SWORD,
+                Material.GOLDEN_SWORD, Material.DIAMOND_SWORD,
+                Material.WOODEN_AXE,   Material.STONE_AXE,   Material.IRON_AXE,
+                Material.GOLDEN_AXE,   Material.DIAMOND_AXE,
+                Material.BOW, Material.CROSSBOW, Material.TRIDENT));
+        Material mace = Material.getMaterial("MACE");
+        if (mace != null) list.add(mace);
+        WEAPONS_T3 = Collections.unmodifiableList(list);
+    }
 
     // T4 = WEAPONS (full pool above)
 
