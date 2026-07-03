@@ -1,4 +1,4 @@
-name: Publish to Modrinth
+name: Publish to Modrinth and Hangar
 
 on:
   release:
@@ -49,3 +49,35 @@ jobs:
             -H "Authorization: $MODRINTH_TOKEN" \
             -F "data=$DATA" \
             -F "file=@target/rpgloot.jar"
+
+      - name: Publish to Hangar
+        env:
+          HANGAR_TOKEN: ${{ secrets.HANGAR_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: |
+          JWT=$(curl -s -X POST \
+            "https://hangar.papermc.io/api/v1/authenticate?apiKey=$HANGAR_TOKEN" \
+            -H "User-Agent: rpgloot-ci" \
+            | jq -r '.token')
+
+          DATA=$(jq -n \
+            --arg version "$RELEASE_TAG" \
+            --arg changelog "$RELEASE_BODY" \
+            '{
+              version: $version,
+              pluginDependencies: { PAPER: [] },
+              platformDependencies: {
+                PAPER: ["1.20.4","1.20.5","1.20.6","1.21","1.21.1","1.21.2","1.21.3","1.21.4","26.1.2"]
+              },
+              description: $changelog,
+              files: [{ fileInfo: null, externalUrl: null, platforms: ["PAPER"] }],
+              channel: "Release"
+            }')
+
+          curl --fail -X POST \
+            "https://hangar.papermc.io/api/v1/projects/okereke-dev/RPGLoot/upload" \
+            -H "Authorization: HangarAuth $JWT" \
+            -H "User-Agent: rpgloot-ci" \
+            -F "versionUpload=$DATA;type=application/json" \
+            -F "files=@target/rpgloot.jar;type=application/java-archive"
