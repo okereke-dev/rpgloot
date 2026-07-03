@@ -6,6 +6,7 @@ public class RPGLootPlugin extends JavaPlugin {
 
     private ItemRarityService rarityService;
     private SetTracker setTracker;
+    private BalanceConfig balanceConfig;
     private LootListener lootListener;
     private StructureLootListener structureLootListener;
     private SetListener setListener;
@@ -15,7 +16,8 @@ public class RPGLootPlugin extends JavaPlugin {
         saveDefaultConfig();
         Keys.init(this);
 
-        rarityService = new ItemRarityService(this);
+        balanceConfig = new BalanceConfig(getConfig(), getLogger());
+        rarityService = new ItemRarityService(this, balanceConfig);
         setTracker    = new SetTracker();
 
         lootListener          = new LootListener(this, rarityService);
@@ -47,6 +49,7 @@ public class RPGLootPlugin extends JavaPlugin {
     /** Called by AdminCommand on /rpgloot reload. Reloads config and propagates to all consumers. */
     public void reloadAll() {
         reloadConfig();
+        balanceConfig.reload(getConfig());
         rarityService.clearStatCache();
         lootListener.reload();
         structureLootListener.reload();

@@ -35,9 +35,11 @@ public final class ItemRarityService {
     private final Random random = new Random();
     private final WeaponNameGenerator nameGenerator = new WeaponNameGenerator();
     private final Plugin plugin;
+    private final BalanceConfig balanceConfig;
 
-    public ItemRarityService(Plugin plugin) {
+    public ItemRarityService(Plugin plugin, BalanceConfig balanceConfig) {
         this.plugin = plugin;
+        this.balanceConfig = balanceConfig;
     }
 
     /** Clears the stat-string parse cache after a config reload. */
@@ -62,13 +64,18 @@ public final class ItemRarityService {
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
 
+        // Cosmetic-only mode: skip all combat stats and set bonuses, keep name/rarity/lore only
+        boolean statsEnabled = balanceConfig.isStatsEnabled();
+
         // Compute all multipliers once so attributes and lore stay in sync
-        double primaryMult = randomBetween(rarity.getMinDamageMultiplier(), rarity.getMaxDamageMultiplier());
-        double speedMult   = randomBetween(rarity.getMinSpeedMultiplier(), rarity.getMaxSpeedMultiplier());
+        double[] damageRange = statsEnabled ? balanceConfig.getDamageRange(rarity) : new double[]{1.0, 1.0};
+        double[] speedRange  = statsEnabled ? balanceConfig.getSpeedRange(rarity)  : new double[]{1.0, 1.0};
+        double primaryMult = randomBetween(damageRange[0], damageRange[1]);
+        double speedMult   = randomBetween(speedRange[0], speedRange[1]);
 
         Material mat = item.getType();
 
-        if (type.isWeapon() && !isRanged(type)) {
+        if (statsEnabled && type.isWeapon() && !isRanged(type)) {
             double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
             double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
             if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
@@ -77,14 +84,14 @@ public final class ItemRarityService {
             if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
                     "rpgloot_speed", speedBonus, AttributeModifier.Operation.ADD_NUMBER));
-        } else if (type.isArmor()) {
+        } else if (statsEnabled && type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
                     "rpgloot_armor", defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
         }
 
-        List<RolledStat> rolledStats = rollBonusStats(rarity, type);
+        List<RolledStat> rolledStats = statsEnabled ? rollBonusStats(rarity, type) : List.of();
         applyPassiveAttributes(meta, rolledStats);
 
         if (type == WeaponType.AXE_TOOL) {
@@ -92,7 +99,9 @@ public final class ItemRarityService {
         }
 
         // Assign set — forced if specified, otherwise random for weapons/armor (not tools)
-        SetBonus setBonus = forcedSet != null ? forcedSet
+        // Skipped entirely in cosmetic-only mode since sets grant mechanical bonuses.
+        SetBonus setBonus = !statsEnabled ? null
+                : forcedSet != null ? forcedSet
                 : (type.isWeapon() || type.isArmor()) ? SET_POOL[random.nextInt(SET_POOL.length)] : null;
         if (setBonus != null) {
             meta.getPersistentDataContainer().set(Keys.SET_NAME, PersistentDataType.STRING, setBonus.getDisplayName());
@@ -112,15 +121,17 @@ public final class ItemRarityService {
         if (type.isWeapon()) {
             if (isRanged(type)) {
                 lore.add(Component.text("Projectile weapon", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-            } else {
+            } else if (statsEnabled) {
                 double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
                 double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
                 lore.add(statLine("Attack Damage", primaryMult, damageBonus));
                 if (speedBonus > 0) lore.add(statLine("Attack Speed", speedMult, speedBonus));
             }
         } else if (type.isArmor()) {
-            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
-            lore.add(statLine("Defense", primaryMult, defenseBonus));
+            if (statsEnabled) {
+                double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
+                lore.add(statLine("Defense", primaryMult, defenseBonus));
+            }
         } else {
             lore.add(Component.text(toolLabel(type), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
@@ -210,7 +221,7 @@ public final class ItemRarityService {
         int count = Math.min(rarity.getBonusStatCount(), pool.size());
         for (int i = 0; i < count; i++) {
             BonusStat chosen = pool.remove(random.nextInt(pool.size()));
-            double[] range = chosen.getRangeFor(rarity);
+            double[] range = balanceConfig.getStatRange(chosen, rarity);
             result.add(new RolledStat(chosen, randomBetween(range[0], range[1])));
         }
         return result;
