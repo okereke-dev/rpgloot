@@ -14,6 +14,15 @@ stat-display: percentage
 # Show floating damage numbers in combat (true/false)
 damage-numbers: true
 
+# Server-wide announcement when a player finds a rare item from a mob/boss kill.
+# Never triggers for structure loot (no "finder" at chest-generation time).
+broadcast:
+  enabled: true
+  # Minimum rarity that triggers an announcement: COMMON | UNCOMMON | RARE | HERO | LEGENDARY
+  min-rarity: HERO
+  sound: true
+  firework: true
+
 # Drop chance per rarity (%) — must add up to 100
 rarity-weights:
   common: 50

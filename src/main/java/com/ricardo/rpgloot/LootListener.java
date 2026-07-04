@@ -28,12 +28,14 @@ public final class LootListener implements Listener {
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final RarityRoller roller;
+    private final DropAnnouncer announcer;
     private final Random random = new Random();
 
     public LootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
         this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
+        this.announcer = new DropAnnouncer(plugin);
     }
 
     public void reload() {
@@ -70,8 +72,10 @@ public final class LootListener implements Listener {
             item = new ItemStack(pool.get(random.nextInt(pool.size())));
         }
 
-        rarityService.applyRarity(item, roller.roll());
+        Rarity rarity = roller.roll();
+        rarityService.applyRarity(item, rarity);
         event.getDrops().add(item);
+        announcer.announce(killer, item, rarity);
     }
 
     // ── Tier detection ────────────────────────────────────────────────────
@@ -165,6 +169,10 @@ public final class LootListener implements Listener {
         ItemStack item = new ItemStack(mat);
         rarityService.applyRarity(item, rarity);
         event.getDrops().add(item);
+
+        if (entity.getKiller() instanceof Player killer) {
+            announcer.announce(killer, item, rarity);
+        }
     }
 
     private List<org.bukkit.Material> getBossWeaponPool(LivingEntity entity) {
