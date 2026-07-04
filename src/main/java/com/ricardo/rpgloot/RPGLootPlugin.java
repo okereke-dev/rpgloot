@@ -58,6 +58,7 @@ public class RPGLootPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ArmorListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(new ToolListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(setListener, this);
+        getServer().getPluginManager().registerEvents(new SetsMenuListener(), this);
 
         AdminCommand adminCommand = new AdminCommand(this, rarityService, setTracker);
         getCommand("rpgloot").setExecutor(adminCommand);

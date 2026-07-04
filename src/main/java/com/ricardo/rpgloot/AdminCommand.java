@@ -238,8 +238,11 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
                         sender.sendMessage(Component.text(line, r.getColor())
                                 .decoration(TextDecoration.ITALIC, false));
                     }
+                } else if (sender instanceof Player player) {
+                    // Overview: open the interactive sets GUI
+                    player.openInventory(new SetsMenu().getInventory());
                 } else {
-                    // Overview: all sets
+                    // Console fallback: text overview
                     sender.sendMessage(Component.text("─── Available Sets ───", NamedTextColor.GOLD));
                     for (SetBonus sb : SetBonus.values()) {
                         sender.sendMessage(Component.text("  ◈ ", NamedTextColor.YELLOW)
