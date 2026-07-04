@@ -2,15 +2,17 @@ package com.ricardo.rpgloot;
 
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -73,24 +75,47 @@ public final class ToolListener implements Listener {
 
         Block block = event.getBlock();
 
-        // Collect FORTUNE_BOOST and AUTO_SMELT_CHANCE first to resolve their conflict:
-        // if smelt procs it takes priority; fortune (if any) then boosts the smelted quantity.
+        // FORTUNE_BOOST and AUTO_SMELT_CHANCE are handled in onBlockDropItem — modifying drop
+        // quantities/types there (rather than cancelling this event) keeps BlockDropItemEvent
+        // firing normally, so mcMMO's Double Drops/Harvest Lumber/Mother Lode and any
+        // Telekinesis-style enchant plugin still get a chance to act on the same block break.
+        for (RolledStat rolled : stats) {
+            switch (rolled.stat()) {
+                case XP_BOOST       -> applyXpBoost(event, player, rolled.value());
+                case REPLANT_CHANCE -> applyReplant(block, rolled.value());
+                default -> {}
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        Player player = event.getPlayer();
+        ItemStack tool = player.getInventory().getItemInMainHand();
+        if (tool.getType().isAir()) return;
+
+        Rarity rarity = rarityService.getRarity(tool);
+        if (rarity == null) return;
+
+        List<RolledStat> stats = rarityService.getBonusStats(tool);
+        if (stats.isEmpty()) return;
+
         double fortuneBoostPct = 0;
         double smeltChancePct  = 0;
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
                 case FORTUNE_BOOST     -> fortuneBoostPct = rolled.value();
                 case AUTO_SMELT_CHANCE -> smeltChancePct  = rolled.value();
-                case XP_BOOST          -> applyXpBoost(event, player, rolled.value());
-                case REPLANT_CHANCE    -> applyReplant(block, rolled.value());
                 default -> {}
             }
         }
+        if (fortuneBoostPct <= 0 && smeltChancePct <= 0) return;
+        if (event.getItems().isEmpty()) return;
 
         if (smeltChancePct > 0 && random.nextDouble() * 100.0 < smeltChancePct) {
-            applyAutoSmelt(event, player, block, fortuneBoostPct); // fortune passed to smelted output
+            applyAutoSmelt(event, fortuneBoostPct); // fortune boosts the smelted output quantity
         } else if (fortuneBoostPct > 0) {
-            applyFortuneBoost(event, block, fortuneBoostPct);
+            applyFortuneBoost(event, fortuneBoostPct);
         }
     }
 
@@ -110,7 +135,7 @@ public final class ToolListener implements Listener {
                 if (random.nextDouble() * 100.0 < rolled.value() && event.getCaught() != null) {
                     // Drop a copy of the caught item near the player
                     player.getWorld().dropItemNaturally(player.getLocation(),
-                            ((org.bukkit.entity.Item) event.getCaught()).getItemStack().clone());
+                            ((Item) event.getCaught()).getItemStack().clone());
                 }
             }
         }
@@ -118,16 +143,34 @@ public final class ToolListener implements Listener {
 
     // ── Stat implementations ──────────────────────────────────────────────
 
-    private void applyFortuneBoost(BlockBreakEvent event, Block block, double fortuneBoostPct) {
-        List<ItemStack> drops = new ArrayList<>(block.getDrops(event.getPlayer().getInventory().getItemInMainHand()));
-        if (drops.isEmpty()) return;
-        event.setDropItems(false);
-        // Always scale drops — Fortune Boost is a passive multiplier, not a proc chance
+    /** Scales every drop entity's stack amount in place — composes with whatever is already in the list. */
+    private void applyFortuneBoost(BlockDropItemEvent event, double fortuneBoostPct) {
         double multiplier = 1.0 + fortuneBoostPct / 100.0;
-        for (ItemStack drop : drops) {
-            ItemStack boosted = drop.clone();
-            boosted.setAmount(Math.min((int) Math.round(drop.getAmount() * multiplier), drop.getMaxStackSize()));
-            block.getWorld().dropItemNaturally(block.getLocation(), boosted);
+        for (Item item : event.getItems()) {
+            ItemStack stack = item.getItemStack();
+            int boosted = Math.min((int) Math.round(stack.getAmount() * multiplier), stack.getMaxStackSize());
+            stack.setAmount(boosted);
+            item.setItemStack(stack);
+        }
+    }
+
+    /** Collapses all drop entities into a single smelted stack, applying fortune to the total amount. */
+    private void applyAutoSmelt(BlockDropItemEvent event, double fortuneBoostPct) {
+        Material smelted = SMELT_MAP.get(event.getBlockState().getType());
+        if (smelted == null) return;
+
+        int baseAmount = event.getItems().stream().mapToInt(item -> item.getItemStack().getAmount()).sum();
+        double multiplier = 1.0 + fortuneBoostPct / 100.0;
+        int finalAmount = Math.min((int) Math.round(baseAmount * multiplier), new ItemStack(smelted).getMaxStackSize());
+
+        // Per BlockDropItemEvent's contract, removing an entry from this list prevents it from
+        // dropping — no need to despawn the entity directly.
+        Iterator<Item> it = event.getItems().iterator();
+        Item first = it.next();
+        first.setItemStack(new ItemStack(smelted, finalAmount));
+        while (it.hasNext()) {
+            it.next();
+            it.remove();
         }
     }
 
@@ -136,21 +179,6 @@ public final class ToolListener implements Listener {
         if (baseXp <= 0) return;
         double total = xpBoostPct + setTracker.getSetBonus(player, BonusStat.XP_BOOST);
         event.setExpToDrop(baseXp + (int) Math.round(baseXp * (total / 100.0)));
-    }
-
-    /** Procs are resolved by the caller; this always executes. fortuneBoostPct may be 0. */
-    private void applyAutoSmelt(BlockBreakEvent event, Player player, Block block, double fortuneBoostPct) {
-        Material smelted = SMELT_MAP.get(block.getType());
-        if (smelted == null) return;
-
-        List<ItemStack> drops = new ArrayList<>(block.getDrops(player.getInventory().getItemInMainHand()));
-        if (drops.isEmpty()) return;
-        event.setDropItems(false);
-
-        int baseAmount = drops.get(0).getAmount();
-        double multiplier = 1.0 + fortuneBoostPct / 100.0;
-        int finalAmount = Math.min((int) Math.round(baseAmount * multiplier), new ItemStack(smelted).getMaxStackSize());
-        block.getWorld().dropItemNaturally(block.getLocation(), new ItemStack(smelted, finalAmount));
     }
 
     private void applyReplant(Block block, double replantChancePct) {
