@@ -163,15 +163,27 @@ public final class LootListener implements Listener {
         Rarity maxRarity = parseRarity(key, "max-rarity", Rarity.LEGENDARY);
         Rarity rarity = roller.rollWithRange(minRarity, maxRarity);
 
-        // Bosses are the only source of Netherite — use full pool including netherite
-        List<org.bukkit.Material> pool = getBossWeaponPool(entity);
-        org.bukkit.Material mat = pool.get(random.nextInt(pool.size()));
-        ItemStack item = new ItemStack(mat);
-        rarityService.applyRarity(item, rarity);
+        // Artifacts are gated on the boss's own top roll (Hero+), not strictly Legendary — some
+        // bosses (e.g. Elder Guardian) intentionally cap below Legendary in their normal pool,
+        // but their unique Artifact is still a rare, deliberate exception to that ceiling.
+        ItemStack item;
+        Artifact artifact = rarity.ordinal() >= Rarity.HERO.ordinal() ? rollArtifactFor(entity) : null;
+        Rarity announceRarity = rarity;
+        if (artifact != null) {
+            item = new ItemStack(artifact.getMaterial());
+            rarityService.applyArtifact(item, artifact);
+            announceRarity = Rarity.LEGENDARY; // artifacts are always Legendary-tier internally
+        } else {
+            // Bosses are the only source of Netherite — use full pool including netherite
+            List<org.bukkit.Material> pool = getBossWeaponPool(entity);
+            org.bukkit.Material mat = pool.get(random.nextInt(pool.size()));
+            item = new ItemStack(mat);
+            rarityService.applyRarity(item, rarity);
+        }
         event.getDrops().add(item);
 
         if (entity.getKiller() instanceof Player killer) {
-            announcer.announce(killer, item, rarity);
+            announcer.announce(killer, item, announceRarity);
         }
     }
 
@@ -180,6 +192,17 @@ public final class LootListener implements Listener {
         if (entity instanceof ElderGuardian) return ItemPools.WEAPONS_T3;
         // Warden, Wither, Ender Dragon → full pool including Netherite
         return ItemPools.WEAPONS;
+    }
+
+    /** Rolls whether this boss's Legendary drop is replaced by its associated Artifact. */
+    private Artifact rollArtifactFor(LivingEntity entity) {
+        if (!plugin.getConfig().getBoolean("artifact-drops.enabled", true)) return null;
+        for (Artifact artifact : Artifact.values()) {
+            if (artifact.getBossType() == entity.getType() && random.nextDouble() < artifact.getDropChance()) {
+                return artifact;
+            }
+        }
+        return null;
     }
 
     private String bossConfigKey(LivingEntity entity) {

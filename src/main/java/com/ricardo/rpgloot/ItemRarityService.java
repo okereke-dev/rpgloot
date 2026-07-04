@@ -2,6 +2,7 @@ package com.ricardo.rpgloot;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
@@ -151,6 +152,83 @@ public final class ItemRarityService {
                 lore.add(Component.text("  " + setBonus.previewLine(rarity, p), NamedTextColor.DARK_GRAY)
                         .decoration(TextDecoration.ITALIC, false));
             }
+        }
+
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Applies a hand-authored Artifact — fixed name, lore, and bonus stats, no RNG.
+     * Always rolls at the top of Legendary's damage/speed range and is stored as
+     * Rarity.LEGENDARY internally, so it plays through the exact same combat/armor/tool
+     * listeners as a normal Legendary item. The ARTIFACT_ID PDC key marks it distinctly.
+     */
+    public ItemStack applyArtifact(ItemStack item, Artifact artifact) {
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+
+        WeaponType type = artifact.getWeaponType();
+        Material mat = item.getType();
+
+        double[] damageRange = balanceConfig.getDamageRange(Rarity.LEGENDARY);
+        double[] speedRange  = balanceConfig.getSpeedRange(Rarity.LEGENDARY);
+        double primaryMult = damageRange[1];
+        double speedMult   = speedRange[1];
+
+        if (type.isWeapon() && !isRanged(type)) {
+            double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
+            double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
+            if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_damage", damageBonus, AttributeModifier.Operation.ADD_NUMBER));
+            if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_speed", speedBonus, AttributeModifier.Operation.ADD_NUMBER));
+        } else if (type.isArmor()) {
+            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
+            if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
+                    UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
+                    "rpgloot_armor", defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
+        }
+
+        List<RolledStat> fixedStats = artifact.getFixedStats();
+        applyPassiveAttributes(meta, fixedStats);
+
+        meta.getPersistentDataContainer().set(Keys.RARITY,      PersistentDataType.STRING, Rarity.LEGENDARY.name());
+        meta.getPersistentDataContainer().set(Keys.BONUS_STATS, PersistentDataType.STRING, serializeStats(fixedStats));
+        meta.getPersistentDataContainer().set(Keys.WEAPON_NAME, PersistentDataType.STRING, artifact.getDisplayName());
+        meta.getPersistentDataContainer().set(Keys.ARTIFACT_ID, PersistentDataType.STRING, artifact.name());
+
+        TextColor artifactColor = TextColor.color(0xB026FF);
+        meta.displayName(Component.text("✦ " + artifact.getDisplayName() + " ✦", artifactColor)
+                .decoration(TextDecoration.ITALIC, false));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Artifact", artifactColor).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.empty());
+        for (String line : artifact.getFlavorText()) {
+            lore.add(Component.text(line, NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, true));
+        }
+        lore.add(Component.empty());
+
+        if (isRanged(type)) {
+            lore.add(Component.text("Projectile weapon", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        } else if (type.isWeapon()) {
+            double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
+            double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
+            lore.add(statLine("Attack Damage", primaryMult, damageBonus));
+            if (speedBonus > 0) lore.add(statLine("Attack Speed", speedMult, speedBonus));
+        } else if (type.isArmor()) {
+            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
+            lore.add(statLine("Defense", primaryMult, defenseBonus));
+        }
+
+        lore.add(Component.empty());
+        for (RolledStat rolled : fixedStats) {
+            lore.add(bonusStatLine(rolled));
         }
 
         meta.lore(lore);

@@ -139,6 +139,31 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
                                 rarity.getColor()).decoration(TextDecoration.ITALIC, false)));
             }
 
+            // /rpgloot getartifact <name>
+            case "getartifact" -> {
+                if (!sender.hasPermission("rpgloot.command.getartifact")) { noPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { playerOnly(sender); return true; }
+                if (args.length < 2) {
+                    sender.sendMessage(err("Usage: /rpgloot getartifact <name>"));
+                    return true;
+                }
+
+                Artifact artifact = Artifact.fromName(args[1]);
+                if (artifact == null) {
+                    sender.sendMessage(err("Unknown artifact: \"" + args[1] + "\". Valid: "
+                            + Arrays.stream(Artifact.values()).map(a -> a.name().toLowerCase())
+                                    .collect(Collectors.joining(", "))));
+                    return true;
+                }
+
+                ItemStack item = new ItemStack(artifact.getMaterial());
+                rarityService.applyArtifact(item, artifact);
+                player.getInventory().addItem(item);
+                sender.sendMessage(Component.text("Generated Artifact: ", NamedTextColor.GRAY)
+                        .append(Component.text(artifact.getDisplayName(), NamedTextColor.LIGHT_PURPLE)
+                                .decoration(TextDecoration.ITALIC, false)));
+            }
+
             // /rpgloot getall [type]
             case "getall" -> {
                 if (!sender.hasPermission("rpgloot.command.getall")) { noPermission(sender); return true; }
@@ -269,6 +294,16 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
                 }
 
                 sender.sendMessage(Component.text("─── Item Stats ───", NamedTextColor.GOLD));
+
+                String artifactId = held.hasItemMeta() ? held.getItemMeta().getPersistentDataContainer()
+                        .get(Keys.ARTIFACT_ID, org.bukkit.persistence.PersistentDataType.STRING) : null;
+                Artifact artifact = Artifact.fromName(artifactId);
+                if (artifact != null) {
+                    sender.sendMessage(label("Artifact").append(
+                            Component.text(artifact.getDisplayName(), NamedTextColor.LIGHT_PURPLE)
+                                    .decoration(TextDecoration.ITALIC, false)));
+                }
+
                 sender.sendMessage(label("Rarity").append(Component.text(rarity.getDisplayName(), rarity.getColor())));
 
                 List<RolledStat> stats = rarityService.getBonusStats(held);
@@ -390,6 +425,7 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("rpgloot.command.get"))    subs.add("get");
             if (sender.hasPermission("rpgloot.command.getall")) subs.add("getall");
             if (sender.hasPermission("rpgloot.command.getset")) subs.add("getset");
+            if (sender.hasPermission("rpgloot.command.getartifact")) subs.add("getartifact");
             if (sender.hasPermission("rpgloot.command.sets"))   subs.add("sets");
             if (sender.hasPermission("rpgloot.command.stats"))  subs.add("stats");
             if (sender.hasPermission("rpgloot.command.set"))    subs.add("set");
@@ -415,6 +451,11 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
         // getall [type]
         if (sub.equals("getall") && args.length == 2) {
             return filter(new ArrayList<>(TYPE_MAP.keySet()), args[1]);
+        }
+
+        // getartifact <name>
+        if (sub.equals("getartifact") && args.length == 2) {
+            return filter(Arrays.stream(Artifact.values()).map(a -> a.name().toLowerCase()).toList(), args[1]);
         }
 
         // getset <set> <rarity> <tier> [pieces]
@@ -450,6 +491,8 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             helpLine(sender, "/rpgloot getall [type]", "One item per rarity tier");
         if (sender.hasPermission("rpgloot.command.getset"))
             helpLine(sender, "/rpgloot getset <set> <rarity> <tier> [pieces]", "Generate a full matching set");
+        if (sender.hasPermission("rpgloot.command.getartifact"))
+            helpLine(sender, "/rpgloot getartifact <name>", "Generate a unique Artifact");
         if (sender.hasPermission("rpgloot.command.sets"))
             helpLine(sender, "/rpgloot sets [set]", "List all sets or inspect one");
         if (sender.hasPermission("rpgloot.command.stats"))

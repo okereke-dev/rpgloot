@@ -10,6 +10,7 @@ public final class Keys {
     public static NamespacedKey WEAPON_NAME;
     public static NamespacedKey ITEM_CATEGORY;
     public static NamespacedKey SET_NAME;
+    public static NamespacedKey ARTIFACT_ID;
 
     private Keys() {}
 
@@ -19,5 +20,6 @@ public final class Keys {
         WEAPON_NAME   = new NamespacedKey(plugin, "weapon_name");
         ITEM_CATEGORY = new NamespacedKey(plugin, "item_category");
         SET_NAME      = new NamespacedKey(plugin, "set_name");
+        ARTIFACT_ID   = new NamespacedKey(plugin, "artifact_id");
     }
 }

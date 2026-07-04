@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.5.1'
+version: '0.5.2'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Ricardo
@@ -31,6 +31,7 @@ permissions:
       rpgloot.command.get: true
       rpgloot.command.getall: true
       rpgloot.command.getset: true
+      rpgloot.command.getartifact: true
       rpgloot.command.sets: true
       rpgloot.command.stats: true
       rpgloot.command.set: true
@@ -57,6 +58,10 @@ permissions:
 
   rpgloot.command.getset:
     description: Use /rpgloot getset to generate a full matching set
+    default: op
+
+  rpgloot.command.getartifact:
+    description: Use /rpgloot getartifact to generate a unique Artifact
     default: op
 
   rpgloot.command.sets:

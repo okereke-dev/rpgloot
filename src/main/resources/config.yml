@@ -58,6 +58,12 @@ boss-drops:
     min-rarity: RARE
     max-rarity: LEGENDARY
 
+# Hand-authored, one-of-a-kind items with fixed names/lore/stats, each tied to a
+# specific boss with a small independent chance to replace its normal Hero+/Legendary
+# drop. See the wiki's Artifacts page for the full list.
+artifact-drops:
+  enabled: true
+
 # ══════════════════════════════════════════════════════════════════════
 # ADVANCED BALANCE TUNING
 # Everything below controls how strong RPGLoot items are. Defaults match
