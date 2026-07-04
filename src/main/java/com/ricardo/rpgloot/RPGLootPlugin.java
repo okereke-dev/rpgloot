@@ -36,6 +36,11 @@ public class RPGLootPlugin extends JavaPlugin {
         getCommand("rpgloot").setExecutor(adminCommand);
         getCommand("rpgloot").setTabCompleter(adminCommand);
 
+        if (getServer().getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new RPGLootExpansion(this).register();
+            getLogger().info("PlaceholderAPI found — registered %rpgloot_*% placeholders");
+        }
+
         getLogger().info("RPGLoot enabled");
     }
 
