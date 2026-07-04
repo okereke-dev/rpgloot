@@ -1,0 +1,185 @@
+[CENTER][SIZE=6][B]⚔ RPGLoot[/B][/SIZE][/CENTER]
+[CENTER][I]Transform your vanilla server into an RPG loot experience — without replacing the game your players already love.[/I][/CENTER]
+
+Hostile mobs, bosses, and ancient structures now drop weapons, armor, and tools with [B]randomized rarity tiers[/B], [B]unique generated names[/B], and [B]hand-crafted bonus stats[/B]. Everything stacks naturally with vanilla mechanics — enchantments, attributes, and loot tables all work exactly as expected. Drop it in, restart, done.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🌱 Vanilla-First Design[/B][/SIZE]
+
+RPGLoot is built to be a [B]complement[/B], not an overhaul. It was reviewed against other RPG-loot plugins specifically to avoid the common pitfalls — uncapped stat stacking, PvP-breaking power creep, and conflicts with other plugins' attributes.
+
+[LIST]
+[*][B]Hard caps on every stackable stat[/B] — Dodge (50%), Damage Reduction (60%), Fall Reduction (80%), Crit Chance (35%), Bleeding (60%). No combination of item + set bonuses can exceed these, ever.
+[*][B]stats-enabled: false[/B] — a one-line config flip that turns RPGLoot into a pure cosmetic rarity layer. Items keep their generated name, color, and rarity tag but grant zero attribute bonuses, zero bonus stats, zero set bonuses. Vanilla combat stays completely untouched.
+[*][B]Fully tunable power level[/B] — every rarity multiplier and bonus-stat range lives in config.yml, not hardcoded. Want a subtler experience? Turn the numbers down. Want more power? Turn them up. No recompiling required.
+[*][B]Real vanilla attributes, not fake NBT[/B] — stat bonuses use Bukkit's native AttributeModifier system, the same one vanilla enchantments use, so RPGLoot plays nicely with other plugins instead of fighting them.
+[/LIST]
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🔌 Integrations[/B][/SIZE]
+
+All optional — RPGLoot works standalone and detects these automatically at startup, with zero impact if they're not installed.
+
+[LIST]
+[*][B]PlaceholderAPI[/B] — exposes %rpgloot_active_set%, %rpgloot_active_set_pieces%, %rpgloot_active_set_bonus%, %rpgloot_stat_legendaries_found%, %rpgloot_stat_sets_completed% for scoreboards, tab list, and GUIs
+[*][B]WorldGuard[/B] — registers a custom rpgloot-drops region flag (/rg flag <region> rpgloot-drops deny) to exclude spawn or protected zones from RPGLoot's mob/boss/structure drops
+[*][B]mcMMO[/B] — RPGLoot's Fortune Boost and Auto-Smelt compose with mcMMO's own gathering bonuses (Double Drops, Mother Lode, Harvest Lumber, Clean Cuts, Verdant Bounty) instead of overriding them, by hooking the same BlockDropItemEvent mcMMO uses
+[/LIST]
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🌟 Rarity System[/B][/SIZE]
+
+Every item rolls one of [B]5 rarity tiers[/B], each with its own color, name style, and stat multiplier range:
+
+[LIST]
+[*]⬜ [B]Common[/B] (Gray) — Low bonus, High drop chance
+[*]🟢 [B]Uncommon[/B] (Green) — Moderate bonus, Medium drop chance
+[*]🔵 [B]Rare[/B] (Blue) — High bonus, Low drop chance
+[*]🟡 [B]Hero[/B] (Gold) — Very High bonus, Very Low drop chance
+[*]🔴 [B]Legendary[/B] (Red) — Maximum bonus, Rare drop chance
+[/LIST]
+
+Each rarity scales damage, defense, and speed independently — and unlocks stronger bonus stat rolls.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]✨ Bonus Stats[/B][/SIZE]
+
+Items roll [B]1–3 bonus stats[/B] from a curated pool per item type. No filler — every stat has a real in-game effect.
+
+[B]⚔ Weapons[/B]
+[LIST]
+[*]Lifesteal — Heal a % of damage dealt
+[*]Crit Chance — Bonus critical strike probability
+[*]Bleeding — DoT damage over several seconds
+[*]Knockback Boost — Extra knockback on hit
+[*]Smash Radius — Mace: splash damage to nearby enemies
+[*]Lightning Strike — Random lightning bolt on target
+[*]Riptide Speed — Boost while in water or rain (Trident)
+[*]Fall Damage Bonus — Damage scales with fall distance
+[/LIST]
+
+[B]🛡 Armor[/B]
+[LIST]
+[*]Health Boost — Permanent max HP increase
+[*]Dodge Chance — % chance to completely avoid a hit
+[*]Damage Reduction — Flat % less damage taken
+[*]Speed Boost — Passive movement speed increase
+[*]Thorns Chance — Reflect damage on hit
+[*]Night Vision — Persistent night vision effect
+[*]Fall Reduction — Reduce fall damage taken
+[/LIST]
+
+[B]⛏ Tools[/B]
+[LIST]
+[*]Fortune Boost — Extra fortune levels
+[*]XP Boost — Bonus XP from blocks and fishing
+[*]Auto-Smelt — Chance to auto-smelt mined blocks
+[*]Replant Chance — Auto-replant harvested crops (Hoe)
+[*]Double Catch — Chance for double fish loot
+[*]Luck Boost — Increased fishing luck
+[/LIST]
+
+[COLOR=#CC8800]Stacking-sensitive stats are hard-capped regardless of item + set combinations: Crit Chance ≤ 35% · Bleeding ≤ 60% · Dodge ≤ 50% · Damage Reduction ≤ 60% · Fall Reduction ≤ 80%.[/COLOR]
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]💎 Set Bonus System[/B][/SIZE]
+
+Every weapon and armor piece belongs to one of [B]8 named sets[/B]. Collect matching pieces — same set name, rarity, and material — to unlock scaling bonuses.
+
+[B]Piece scaling:[/B] 2 pcs → 30% · 3 pcs → 55% · 4 pcs → 75% · 5 pcs → 100% + Special Effect
+
+[LIST]
+[*]🌑 [B]Shadowveil[/B] — Dodge Chance (Legendary 5pcs: +11.0%)
+[*]⛓ [B]Ironbound[/B] — Damage Reduction (+11.0%)
+[*]🌅 [B]Dawnbreaker[/B] — Crit Chance (+11.0%)
+[*]🌊 [B]Tidecaller[/B] — Lifesteal (+5.0%)
+[*]🔥 [B]Emberclaw[/B] — Bleeding Chance (+20%)
+[*]⚡ [B]Stormwarden[/B] — Speed Boost (+10.0%)
+[*]🌀 [B]Voidwalker[/B] — XP Boost (+25%)
+[*]✨ [B]Gilded[/B] — Luck (+1.8 pts)
+[/LIST]
+
+The active piece count is highlighted live in the item lore in the set's rarity color. Bonuses stack additively with individual item stats.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]✦ Artifacts — Unique Boss Drops[/B][/SIZE]
+
+Hand-authored, one-of-a-kind items with a fixed name, lore, and stats — no RNG. Each has a small independent chance to replace a specific boss's normal drop:
+
+[LIST]
+[*][B]The Warden's Maul[/B] (Warden) — Mace with Smash Radius +5 blk, Lifesteal +12%
+[*][B]Witherbane[/B] (Wither) — Sword with Bleeding +60%, Crit Chance +20%
+[*][B]Tidelord's Trident[/B] (Elder Guardian) — Riptide Speed +40%, Lightning Strike +25%
+[*][B]Dragonfang Bow[/B] (Ender Dragon) — Arrow Damage +40%, Multishot +35%
+[/LIST]
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]💀 Drop Sources[/B][/SIZE]
+
+[B]Hostile Mobs[/B] — Every hostile mob has a configurable drop chance. Material tier scales with the mob's difficulty zone:
+
+[LIST]
+[*]Overworld (basic) — up to Iron
+[*]Overworld (structures) — up to Gold
+[*]Nether — up to Diamond
+[*]End / unlimited — up to Netherite
+[/LIST]
+
+[B]Boss Mobs[/B] — Elder Guardian, Wither, Ender Dragon, and Warden guarantee a drop with a configurable minimum rarity floor.
+
+[B]Vanilla Structures[/B] — Strongholds, Bastions, End Cities, Jungle Temples, and more have a configurable chance to contain an RPGLoot weapon in their loot chests.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🎯 Combat Feedback & Rare-Drop Fanfare[/B][/SIZE]
+
+[LIST]
+[*]Floating damage numbers — color-coded per type, rise above the target
+[*]🩸 Bleed ticks show separate red numbers
+[*]💚 Lifesteal pulses green healing numbers on the attacker
+[*]💥 Crits show enlarged gold numbers
+[*]⚡ Smash hits show splash damage on nearby targets
+[*]Particle effects for crits, lifesteal, bleeds, and mace smash rings
+[*][B]Server-wide announcement[/B] + sound + firework burst when a player finds a Hero+ item (configurable threshold)
+[/LIST]
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🏆 Leaderboard[/B][/SIZE]
+
+/rpgloot leaderboard shows the top 10 players for Legendaries found and full sets completed — server-wide bragging rights, no extra setup.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]⚙ Configuration[/B][/SIZE]
+
+Everything is tunable in config.yml — no recompile needed: pure cosmetic mode toggle, drop chances, rarity weights, structure loot, boss drop ranges, Artifact toggle, server-wide announcement settings, and fully overridable rarity multipliers + bonus-stat ranges. Ships pre-populated with tested, vanilla-friendly defaults.
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]📦 Installation[/B][/SIZE]
+
+1. Drop rpgloot.jar into your /plugins folder
+2. Restart the server
+3. Done — no setup required
+
+[B]Requirements:[/B] Paper 1.20.4 – 26.1.2 · Java 21 · No dependencies
+
+[COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
+
+[SIZE=4][B]🔗 Links[/B][/SIZE]
+
+[LIST]
+[*][URL='https://github.com/okereke-dev/rpgloot/wiki']Full Wiki[/URL]
+[*][URL='https://github.com/okereke-dev/rpgloot']Source Code[/URL]
+[*][URL='https://github.com/okereke-dev/rpgloot/issues']Report a Bug[/URL]
+[*][URL='https://modrinth.com/plugin/rpgloot']Modrinth[/URL]
+[*][URL='https://hangar.papermc.io/okereke-dev/RPGLoot']Hangar[/URL]
+[/LIST]
