@@ -1,10 +1,10 @@
 name: RPGLoot
-version: '0.4.0'
+version: '0.4.1'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Ricardo
 description: RPG rarity system for weapons, armor and tools with randomized mob drops (Common to Legendary)
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, WorldGuard]
 
 commands:
   rpgloot:

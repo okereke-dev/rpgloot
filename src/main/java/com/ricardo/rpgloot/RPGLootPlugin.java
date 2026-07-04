@@ -10,6 +10,33 @@ public class RPGLootPlugin extends JavaPlugin {
     private LootListener lootListener;
     private StructureLootListener structureLootListener;
     private SetListener setListener;
+    private boolean worldGuardActive;
+
+    @Override
+    public void onLoad() {
+        // WorldGuard locks its FlagRegistry once it enables, so custom flags must be
+        // registered here. onLoad() runs for every plugin (in dependency order) before
+        // any plugin's onEnable() runs, so softdepend ordering is respected.
+        if (getServer().getPluginManager().getPlugin("WorldGuard") != null) {
+            try {
+                WorldGuardHook.registerFlag(getLogger());
+                worldGuardActive = true;
+                getLogger().info("WorldGuard found — registered 'rpgloot-drops' region flag");
+            } catch (NoClassDefFoundError e) {
+                getLogger().warning("WorldGuard detected but its API could not be loaded — region-based drop control disabled.");
+            }
+        }
+    }
+
+    /** True if drops/injections are allowed at this location. Always true if WorldGuard isn't installed. */
+    public boolean isDropsAllowed(org.bukkit.Location location) {
+        if (!worldGuardActive) return true;
+        try {
+            return WorldGuardHook.isDropsAllowed(location);
+        } catch (NoClassDefFoundError e) {
+            return true;
+        }
+    }
 
     @Override
     public void onEnable() {

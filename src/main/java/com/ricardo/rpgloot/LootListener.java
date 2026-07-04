@@ -52,6 +52,7 @@ public final class LootListener implements Listener {
         if (!(entity instanceof Monster)) return;
         if (!(entity.getKiller() instanceof Player killer)) return;
         if (!killer.hasPermission("rpgloot.drops")) return;
+        if (!plugin.isDropsAllowed(entity.getLocation())) return;
 
         double dropChance = plugin.getConfig().getDouble("drop-chance", 0.08);
         if (random.nextDouble() > dropChance) return;
@@ -143,6 +144,7 @@ public final class LootListener implements Listener {
 
     private void handleBossDrop(EntityDeathEvent event, LivingEntity entity) {
         if (!plugin.getConfig().getBoolean("boss-drops.enabled", true)) return;
+        if (!plugin.isDropsAllowed(entity.getLocation())) return;
 
         // Only drop for the killing player if they have permission
         if (entity.getKiller() instanceof Player killer && !killer.hasPermission("rpgloot.boss.drops")) return;

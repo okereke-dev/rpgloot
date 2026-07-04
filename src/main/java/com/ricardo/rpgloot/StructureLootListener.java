@@ -57,6 +57,8 @@ public final class StructureLootListener implements Listener {
         Rarity maxRarity = STRUCTURE_MAX_RARITY.get(tableKey);
         if (maxRarity == null) return; // not a recognized structure chest
 
+        if (!plugin.isDropsAllowed(event.getLootContext().getLocation())) return;
+
         double injectChance = plugin.getConfig().getDouble("structure-loot.inject-chance", 0.40);
         if (random.nextDouble() > injectChance) return;
 
