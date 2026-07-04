@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.3.3-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.4.2-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
 
 # ⚔️ RPGLoot
 
@@ -16,6 +16,16 @@ RPGLoot is built to be a **complement**, not an overhaul. It was reviewed agains
 - **`stats-enabled: false`** — a one-line config flip that turns RPGLoot into a **pure cosmetic rarity layer**. Items keep their generated name, color, and rarity tag but grant zero attribute bonuses, zero bonus stats, zero set bonuses. Vanilla combat stays completely untouched.
 - **Fully tunable power level** — every rarity multiplier and bonus-stat range lives in `config.yml`, not hardcoded. Want a subtler experience? Turn the numbers down. Want more power? Turn them up. No recompiling required.
 - **Real vanilla attributes, not fake NBT** — stat bonuses use Bukkit's native `AttributeModifier` system, the same one vanilla enchantments use, so RPGLoot plays nicely with other plugins instead of fighting them.
+
+---
+
+## 🔌 Integrations
+
+All optional — RPGLoot works standalone and detects these automatically at startup, with zero impact if they're not installed.
+
+- **PlaceholderAPI** — exposes `%rpgloot_active_set%`, `%rpgloot_active_set_pieces%`, `%rpgloot_active_set_bonus%` for scoreboards, tab list, and GUIs
+- **WorldGuard** — registers a custom `rpgloot-drops` region flag (`/rg flag <region> rpgloot-drops deny`) to exclude spawn or protected zones from RPGLoot's mob/boss/structure drops
+- **mcMMO** — RPGLoot's Fortune Boost and Auto-Smelt compose with mcMMO's own gathering bonuses (Double Drops, Mother Lode, Harvest Lumber, Clean Cuts, Verdant Bounty) instead of overriding them, by hooking the same `BlockDropItemEvent` mcMMO uses. Full mechanical breakdown of every overlapping stat on the [Compatibility wiki page](https://github.com/okereke-dev/rpgloot/wiki/Compatibility)
 
 ---
 
