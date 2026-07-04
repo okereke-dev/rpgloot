@@ -7,6 +7,7 @@ public class RPGLootPlugin extends JavaPlugin {
     private ItemRarityService rarityService;
     private SetTracker setTracker;
     private BalanceConfig balanceConfig;
+    private PlayerStats playerStats;
     private LootListener lootListener;
     private StructureLootListener structureLootListener;
     private SetListener setListener;
@@ -45,9 +46,10 @@ public class RPGLootPlugin extends JavaPlugin {
 
         balanceConfig = new BalanceConfig(getConfig(), getLogger());
         rarityService = new ItemRarityService(this, balanceConfig);
-        setTracker    = new SetTracker();
+        playerStats   = new PlayerStats(getDataFolder(), getLogger());
+        setTracker    = new SetTracker(playerStats);
 
-        lootListener          = new LootListener(this, rarityService);
+        lootListener          = new LootListener(this, rarityService, playerStats);
         structureLootListener = new StructureLootListener(this, rarityService);
         setListener           = new SetListener(this, setTracker);
 
@@ -60,7 +62,7 @@ public class RPGLootPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(setListener, this);
         getServer().getPluginManager().registerEvents(new SetsMenuListener(), this);
 
-        AdminCommand adminCommand = new AdminCommand(this, rarityService, setTracker);
+        AdminCommand adminCommand = new AdminCommand(this, rarityService, setTracker, playerStats);
         getCommand("rpgloot").setExecutor(adminCommand);
         getCommand("rpgloot").setTabCompleter(adminCommand);
 
@@ -90,4 +92,5 @@ public class RPGLootPlugin extends JavaPlugin {
 
     public ItemRarityService getRarityService() { return rarityService; }
     public SetTracker getSetTracker()           { return setTracker; }
+    public PlayerStats getPlayerStats()         { return playerStats; }
 }

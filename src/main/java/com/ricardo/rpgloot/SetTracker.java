@@ -42,26 +42,41 @@ public final class SetTracker {
     private static final UUID SET_LUCK_UUID  = UUID.nameUUIDFromBytes("rpgloot:set_luck".getBytes(java.nio.charset.StandardCharsets.UTF_8));
 
     private final Map<UUID, ActiveSet> activeSets = new HashMap<>();
+    // Transient edge-detection so re-equipping an already-completed set doesn't double count
+    private final java.util.Set<UUID> currentlyFullSets = new java.util.HashSet<>();
+    private final PlayerStats playerStats;
+
+    public SetTracker(PlayerStats playerStats) {
+        this.playerStats = playerStats;
+    }
 
     // ── Public API ────────────────────────────────────────────────────────
 
     /** Recomputes and applies the active set for a player. Call after any equipment change. */
     public void recalculate(Player player) {
         removePassiveModifiers(player);
+        UUID uuid = player.getUniqueId();
 
         if (!player.hasPermission("rpgloot.sets")) {
-            activeSets.remove(player.getUniqueId());
+            activeSets.remove(uuid);
+            currentlyFullSets.remove(uuid);
             return;
         }
 
         ActiveSet best = findBestSet(player);
 
         if (best != null) {
-            activeSets.put(player.getUniqueId(), best);
+            activeSets.put(uuid, best);
             applyPassiveModifiers(player, best);
         } else {
-            activeSets.remove(player.getUniqueId());
+            activeSets.remove(uuid);
         }
+
+        boolean isFull = best != null && best.isFull();
+        if (isFull && !currentlyFullSets.contains(uuid)) {
+            playerStats.incrementSetsCompleted(player);
+        }
+        if (isFull) currentlyFullSets.add(uuid); else currentlyFullSets.remove(uuid);
 
         refreshAllSetLore(player, best);
     }
@@ -84,6 +99,7 @@ public final class SetTracker {
     /** Clears state when a player leaves. */
     public void remove(UUID uuid) {
         activeSets.remove(uuid);
+        currentlyFullSets.remove(uuid);
     }
 
     // ── Set detection ─────────────────────────────────────────────────────

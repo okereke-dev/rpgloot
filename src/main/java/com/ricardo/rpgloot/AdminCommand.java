@@ -84,12 +84,14 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
     private final Plugin plugin;
     private final ItemRarityService rarityService;
     private final SetTracker setTracker;
+    private final PlayerStats playerStats;
     private final Random random = new Random();
 
-    public AdminCommand(Plugin plugin, ItemRarityService rarityService, SetTracker setTracker) {
+    public AdminCommand(Plugin plugin, ItemRarityService rarityService, SetTracker setTracker, PlayerStats playerStats) {
         this.plugin        = plugin;
         this.rarityService = rarityService;
         this.setTracker    = setTracker;
+        this.playerStats   = playerStats;
     }
 
     // ── Command dispatch ──────────────────────────────────────────────────
@@ -404,6 +406,31 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
                         NamedTextColor.GREEN));
             }
 
+            // /rpgloot leaderboard [legendaries|sets]
+            case "leaderboard" -> {
+                if (!sender.hasPermission("rpgloot.command.leaderboard")) { noPermission(sender); return true; }
+
+                String board = args.length > 1 ? args[1].toLowerCase() : "legendaries";
+                boolean bySets = board.equals("sets");
+                var entries = bySets ? playerStats.topSetsCompleted(10) : playerStats.topLegendariesFound(10);
+
+                sender.sendMessage(Component.text(
+                        "─── " + (bySets ? "Sets Completed" : "Legendaries Found") + " Leaderboard ───",
+                        NamedTextColor.GOLD));
+
+                if (entries.isEmpty()) {
+                    sender.sendMessage(Component.text("  No data yet.", NamedTextColor.DARK_GRAY));
+                } else {
+                    int rank = 1;
+                    for (var entry : entries) {
+                        sender.sendMessage(Component.text(
+                                "  " + rank + ". " + playerStats.nameFor(entry.getKey()) + " — " + entry.getValue(),
+                                rank == 1 ? NamedTextColor.GOLD : NamedTextColor.GRAY));
+                        rank++;
+                    }
+                }
+            }
+
             // /rpgloot reload
             case "reload" -> {
                 if (!sender.hasPermission("rpgloot.command.reload")) { noPermission(sender); return true; }
@@ -430,6 +457,7 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("rpgloot.command.stats"))  subs.add("stats");
             if (sender.hasPermission("rpgloot.command.set"))    subs.add("set");
             if (sender.hasPermission("rpgloot.command.clear"))  subs.add("clear");
+            if (sender.hasPermission("rpgloot.command.leaderboard")) subs.add("leaderboard");
             if (sender.hasPermission("rpgloot.command.reload")) subs.add("reload");
             return filter(subs, args[0]);
         }
@@ -478,6 +506,11 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             return filter(SET_NAMES, args[1]);
         }
 
+        // leaderboard [legendaries|sets]
+        if (sub.equals("leaderboard") && args.length == 2) {
+            return filter(List.of("legendaries", "sets"), args[1]);
+        }
+
         return List.of();
     }
 
@@ -501,6 +534,8 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             helpLine(sender, "/rpgloot set", "View active set bonus");
         if (sender.hasPermission("rpgloot.command.clear"))
             helpLine(sender, "/rpgloot clear", "Remove all RPGLoot items from inventory");
+        if (sender.hasPermission("rpgloot.command.leaderboard"))
+            helpLine(sender, "/rpgloot leaderboard [legendaries|sets]", "View the server leaderboard");
         if (sender.hasPermission("rpgloot.command.reload"))
             helpLine(sender, "/rpgloot reload", "Reload config.yml");
     }

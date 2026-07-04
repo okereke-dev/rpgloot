@@ -29,13 +29,15 @@ public final class LootListener implements Listener {
     private final ItemRarityService rarityService;
     private final RarityRoller roller;
     private final DropAnnouncer announcer;
+    private final PlayerStats playerStats;
     private final Random random = new Random();
 
-    public LootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
+    public LootListener(RPGLootPlugin plugin, ItemRarityService rarityService, PlayerStats playerStats) {
         this.plugin = plugin;
         this.rarityService = rarityService;
         this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
         this.announcer = new DropAnnouncer(plugin);
+        this.playerStats = playerStats;
     }
 
     public void reload() {
@@ -76,6 +78,7 @@ public final class LootListener implements Listener {
         rarityService.applyRarity(item, rarity);
         event.getDrops().add(item);
         announcer.announce(killer, item, rarity);
+        if (rarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
     }
 
     // ── Tier detection ────────────────────────────────────────────────────
@@ -184,6 +187,7 @@ public final class LootListener implements Listener {
 
         if (entity.getKiller() instanceof Player killer) {
             announcer.announce(killer, item, announceRarity);
+            if (announceRarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
         }
     }
 

@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.5.2'
+version: '0.5.3'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Ricardo
@@ -9,7 +9,7 @@ softdepend: [PlaceholderAPI, WorldGuard]
 commands:
   rpgloot:
     description: RPGLoot admin commands
-    usage: /rpgloot <get|getall|getset|sets|stats|set|clear|reload>
+    usage: /rpgloot <get|getall|getset|getartifact|sets|stats|set|clear|leaderboard|reload>
     permission: rpgloot.command.stats
 
 permissions:
@@ -36,6 +36,7 @@ permissions:
       rpgloot.command.stats: true
       rpgloot.command.set: true
       rpgloot.command.clear: true
+      rpgloot.command.leaderboard: true
       rpgloot.command.reload: true
 
   # ── Commands ──────────────────────────────────────────────────────────
@@ -71,6 +72,10 @@ permissions:
   rpgloot.command.clear:
     description: Use /rpgloot clear to remove RPGLoot items from inventory
     default: op
+
+  rpgloot.command.leaderboard:
+    description: Use /rpgloot leaderboard to view the server leaderboard
+    default: true
 
   rpgloot.command.reload:
     description: Use /rpgloot reload to reload config.yml
