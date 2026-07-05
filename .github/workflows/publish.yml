@@ -28,7 +28,10 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           RELEASE_BODY: ${{ github.event.release.body }}
         run: |
-          DATA=$(jq -n \
+          # Written to a file and referenced via -F data=@file rather than inlined, so
+          # curl's own -F syntax (which treats ";" as a field-metadata separator) can't
+          # be broken by punctuation in the release notes.
+          jq -n \
             --arg name "$RELEASE_NAME" \
             --arg version_number "$RELEASE_TAG" \
             --arg changelog "$RELEASE_BODY" \
@@ -43,11 +46,11 @@ jobs:
               featured: true,
               project_id: "NmC4gGNc",
               file_parts: ["file"]
-            }')
+            }' > modrinth-payload.json
 
           curl --fail -X POST "https://api.modrinth.com/v2/version" \
             -H "Authorization: $MODRINTH_TOKEN" \
-            -F "data=$DATA" \
+            -F "data=@modrinth-payload.json;type=application/json" \
             -F "file=@target/rpgloot.jar"
 
       - name: Publish to Hangar
@@ -63,7 +66,9 @@ jobs:
           JWT=$(echo "$AUTH_RESPONSE" | jq -r '.token')
           echo "JWT prefix: ${JWT:0:20}..."
 
-          DATA=$(jq -n \
+          # Same rationale as the Modrinth step: write to a file and reference via @file
+          # rather than inlining, so ";" in the release notes can't break curl's -F parsing.
+          jq -n \
             --arg version "$RELEASE_TAG" \
             --arg changelog "$RELEASE_BODY" \
             '{
@@ -75,13 +80,13 @@ jobs:
               description: $changelog,
               files: [{ fileInfo: null, externalUrl: null, platforms: ["PAPER"] }],
               channel: "Release"
-            }')
+            }' > hangar-payload.json
 
           UPLOAD_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST \
             "https://hangar.papermc.io/api/v1/projects/okereke-dev/RPGLoot/upload" \
             -H "Authorization: HangarAuth $JWT" \
             -H "User-Agent: rpgloot-ci" \
-            -F "versionUpload=$DATA;type=application/json" \
+            -F "versionUpload=@hangar-payload.json;type=application/json" \
             -F "files=@target/rpgloot.jar;type=application/java-archive")
           echo "Upload response: $UPLOAD_RESPONSE"
           HTTP_STATUS=$(echo "$UPLOAD_RESPONSE" | grep "HTTP_STATUS" | cut -d: -f2)
