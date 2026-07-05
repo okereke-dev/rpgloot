@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.5.3'
+version: '0.6.0'
 main: com.ricardo.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Ricardo

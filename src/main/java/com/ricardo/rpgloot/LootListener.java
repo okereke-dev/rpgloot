@@ -74,11 +74,26 @@ public final class LootListener implements Listener {
             item = new ItemStack(pool.get(random.nextInt(pool.size())));
         }
 
-        Rarity rarity = roller.roll();
+        Rarity rarity = rollRarity(entity);
         rarityService.applyRarity(item, rarity);
         event.getDrops().add(item);
         announcer.announce(killer, item, rarity);
         if (rarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
+    }
+
+    /** Rolls rarity, raising the floor if RPGMood scaled this mob and its level meets a configured threshold. */
+    private Rarity rollRarity(LivingEntity entity) {
+        if (!plugin.getConfig().getBoolean("rpgmood-integration.enabled", true)) {
+            return roller.roll();
+        }
+
+        Integer mobLevel = RPGMoodIntegration.getMobLevel(entity);
+        if (mobLevel == null || mobLevel <= 0) {
+            return roller.roll();
+        }
+
+        Rarity floor = RPGMoodIntegration.getRarityFloor(mobLevel, plugin.getConfig().getConfigurationSection("rpgmood-integration.level-thresholds"));
+        return floor == null ? roller.roll() : roller.rollWithMin(floor);
     }
 
     // ── Tier detection ────────────────────────────────────────────────────

@@ -31,6 +31,18 @@ rarity-weights:
   hero: 5
   legendary: 2
 
+# Optional integration with RPGMood: if a hostile mob was scaled by RPGMood's difficulty
+# system, this raises the minimum rarity floor for its drop based on its RPGMood level.
+# No effect at all if RPGMood isn't installed. Each entry means "at this mob level or
+# higher, the drop's minimum rarity becomes this tier" — the highest threshold met wins.
+rpgmood-integration:
+  enabled: true
+  level-thresholds:
+    UNCOMMON: 10
+    RARE: 20
+    HERO: 30
+    LEGENDARY: 40
+
 # Items injected into vanilla structure chests on first generation
 structure-loot:
   enabled: true

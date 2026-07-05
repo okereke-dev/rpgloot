@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.0] — 2026-07-05
+
+### Added
+- **RPGMood integration** — if RPGMood is installed, mobs it scales carry a `rpgmood:level` PersistentDataContainer tag; RPGLoot now reads that level and raises the minimum rarity floor for the drop based on configurable thresholds (`rpgmood-integration` in `config.yml`). No dependency between the two plugins, no effect if RPGMood isn't installed.
+
 ## [0.2.0] — 2026-06-30
 
 ### Added
