@@ -26,7 +26,7 @@ All optional — RPGLoot works standalone and detects these automatically at sta
 - **PlaceholderAPI** — exposes `%rpgloot_active_set%`, `%rpgloot_active_set_pieces%`, `%rpgloot_active_set_bonus%` for scoreboards, tab list, and GUIs
 - **WorldGuard** — registers a custom `rpgloot-drops` region flag (`/rg flag <region> rpgloot-drops deny`) to exclude spawn or protected zones from RPGLoot's mob/boss/structure drops
 - **mcMMO** — RPGLoot's Fortune Boost and Auto-Smelt compose with mcMMO's own gathering bonuses (Double Drops, Mother Lode, Harvest Lumber, Clean Cuts, Verdant Bounty) instead of overriding them, by hooking the same `BlockDropItemEvent` mcMMO uses. Full mechanical breakdown of every overlapping stat on the [Compatibility wiki page](https://github.com/okereke-dev/rpgloot/wiki/Compatibility)
-- **RPGMood** — mobs scaled by RPGMood's difficulty system get a higher minimum rarity floor the more dangerous they are (configurable level thresholds), with zero setup on either side
+- **RPGMood** — two-way, zero-dependency integration: mobs scaled by RPGMood's difficulty system get a higher minimum rarity floor the more dangerous they are (configurable level thresholds), and RPGMood's achievement system reacts to your rarities, Artifacts, and set completions — including "Godslayer's Arsenal" for collecting all 4 of RPGLoot's boss-exclusive Artifacts
 
 ---
 
