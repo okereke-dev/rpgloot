@@ -60,6 +60,7 @@ public final class SetTracker {
         if (!player.hasPermission("rpgloot.sets")) {
             activeSets.remove(uuid);
             currentlyFullSets.remove(uuid);
+            player.getPersistentDataContainer().remove(Keys.ACTIVE_SET_RARITY);
             return;
         }
 
@@ -77,6 +78,14 @@ public final class SetTracker {
             playerStats.incrementSetsCompleted(player);
         }
         if (isFull) currentlyFullSets.add(uuid); else currentlyFullSets.remove(uuid);
+
+        // Exposed for other plugins (e.g. RPGMood achievements) to read via PDC — no event,
+        // no dependency, mirrors how RPGMood exposes a scaled mob's level.
+        if (isFull) {
+            player.getPersistentDataContainer().set(Keys.ACTIVE_SET_RARITY, PersistentDataType.STRING, best.rarity().name());
+        } else {
+            player.getPersistentDataContainer().remove(Keys.ACTIVE_SET_RARITY);
+        }
 
         refreshAllSetLore(player, best);
     }

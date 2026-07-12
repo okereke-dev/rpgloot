@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0] — 2026-07-12
+
+### Added
+- **RPGMood achievements integration** — exposes two new soft-integration hooks for other plugins (namely RPGMood) to read via `PersistentDataContainer`, no dependency either way:
+  - `rpgloot:active_set_rarity` — written on the *player* while a full 5-piece set bonus is active (value is the set's rarity), cleared when it stops being full (`SetTracker.recalculate()`)
+  - Distinct Artifacts found are now tracked per-player (`PlayerStats.artifactsFound`, persisted to `playerstats.yml` as `artifacts-found`), recorded in `LootListener` alongside the existing Legendary-found tracking
+
 ## [0.6.0] — 2026-07-05
 
 ### Added

@@ -203,6 +203,7 @@ public final class LootListener implements Listener {
         if (entity.getKiller() instanceof Player killer) {
             announcer.announce(killer, item, announceRarity);
             if (announceRarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
+            if (artifact != null) playerStats.recordArtifactFound(killer, artifact);
         }
     }
 

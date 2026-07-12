@@ -6,8 +6,10 @@ import org.bukkit.entity.Player;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -25,6 +27,7 @@ public final class PlayerStats {
 
     private final Map<UUID, Integer> legendariesFound = new HashMap<>();
     private final Map<UUID, Integer> setsCompleted = new HashMap<>();
+    private final Map<UUID, Set<String>> artifactsFound = new HashMap<>();
     private final Map<UUID, String> lastKnownName = new HashMap<>();
 
     public PlayerStats(File dataFolder, Logger logger) {
@@ -40,6 +43,7 @@ public final class PlayerStats {
                 UUID uuid = UUID.fromString(key);
                 legendariesFound.put(uuid, data.getInt(key + ".legendaries-found", 0));
                 setsCompleted.put(uuid, data.getInt(key + ".sets-completed", 0));
+                artifactsFound.put(uuid, new HashSet<>(data.getStringList(key + ".artifacts-found")));
                 lastKnownName.put(uuid, data.getString(key + ".name", "Unknown"));
             } catch (IllegalArgumentException e) {
                 logger.warning("Skipping invalid UUID key in playerstats.yml: '" + key + "'");
@@ -61,8 +65,18 @@ public final class PlayerStats {
         save(uuid);
     }
 
+    /** Records a distinct Artifact as found (ever) by this player. No-op if already recorded. */
+    public void recordArtifactFound(Player player, Artifact artifact) {
+        UUID uuid = player.getUniqueId();
+        Set<String> found = artifactsFound.computeIfAbsent(uuid, k -> new HashSet<>());
+        if (!found.add(artifact.name())) return;
+        lastKnownName.put(uuid, player.getName());
+        save(uuid);
+    }
+
     public int getLegendariesFound(UUID uuid) { return legendariesFound.getOrDefault(uuid, 0); }
     public int getSetsCompleted(UUID uuid)    { return setsCompleted.getOrDefault(uuid, 0); }
+    public Set<String> getArtifactsFound(UUID uuid) { return Set.copyOf(artifactsFound.getOrDefault(uuid, Set.of())); }
     public String nameFor(UUID uuid)          { return lastKnownName.getOrDefault(uuid, "Unknown"); }
 
     public List<Map.Entry<UUID, Integer>> topLegendariesFound(int limit) {
@@ -83,6 +97,7 @@ public final class PlayerStats {
         String key = uuid.toString();
         data.set(key + ".legendaries-found", legendariesFound.getOrDefault(uuid, 0));
         data.set(key + ".sets-completed", setsCompleted.getOrDefault(uuid, 0));
+        data.set(key + ".artifacts-found", List.copyOf(artifactsFound.getOrDefault(uuid, Set.of())));
         data.set(key + ".name", lastKnownName.get(uuid));
         try {
             data.save(file);
