@@ -41,7 +41,9 @@ public class RPGLootPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig();
+        ConfigMerge.mergeAndSave(this, "config.yml");
+        reloadConfig();
+        getConfig().options().copyDefaults(true);
         Keys.init(this);
 
         balanceConfig = new BalanceConfig(getConfig(), getLogger());
@@ -84,7 +86,9 @@ public class RPGLootPlugin extends JavaPlugin {
 
     /** Called by AdminCommand on /rpgloot reload. Reloads config and propagates to all consumers. */
     public void reloadAll() {
+        ConfigMerge.mergeAndSave(this, "config.yml");
         reloadConfig();
+        getConfig().options().copyDefaults(true);
         balanceConfig.reload(getConfig());
         rarityService.clearStatCache();
         lootListener.reload();

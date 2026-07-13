@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] — 2026-07-13
+
+### Added
+- **`config.yml` now auto-merges new keys on startup/`/rpgloot reload`** instead of only writing a default file when it's entirely missing. Any key added by a newer plugin version is filled in automatically without touching anything you've already customized. (New `ConfigMerge` utility, uses Bukkit's own `setDefaults`/`copyDefaults` mechanism.) Trade-off: the first merge strips the file's comments (values are all preserved exactly, comments are not — a `YamlConfiguration` limitation).
+
 ## [0.8.0] — 2026-07-13
 
 ### Changed
