@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.3] — 2026-07-13
+
+### Fixed
+- **Only one piece of a full armor set was actually granting armor.** Every armor piece's `GENERIC_ARMOR` `AttributeModifier` used the exact same fixed UUID (`rpgloot_armor`) regardless of which piece it was. Minecraft's attribute system only keeps one active modifier per UUID — when a player wore a full 4-piece set, all four pieces collided on that identical UUID and only one of them actually contributed to the player's armor value, instead of all four summing together. A "Legendary" full iron set could show barely more armor than a single piece, let alone more than plain vanilla iron. Same collision affected weapon damage/speed (harmless in practice, since only one weapon is ever held) and the HEALTH_BOOST/SPEED_BOOST/LUCK_BOOST bonus stats (real impact: two pieces rolling the same bonus stat would silently drop one). Modifier UUIDs are now keyed per-material, so every equipped piece contributes independently. Same caveat as v0.8.2 — only affects newly generated items, not gear already in inventories.
+
 ## [0.8.2] — 2026-07-13
 
 ### Fixed

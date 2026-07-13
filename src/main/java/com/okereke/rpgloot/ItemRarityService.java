@@ -84,20 +84,20 @@ public final class ItemRarityService {
             // value must be the full vanilla+bonus total, not just the bonus increment, or
             // the item ends up far weaker than plain vanilla gear instead of stronger.
             if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_damage", mat),
                     "rpgloot_damage", VanillaStats.baseDamage(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
             if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_speed", mat),
                     "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (statsEnabled && type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_armor", mat),
                     "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> rolledStats = statsEnabled ? rollBonusStats(rarity, type) : List.of();
-        applyPassiveAttributes(meta, rolledStats);
+        applyPassiveAttributes(meta, mat, rolledStats);
 
         if (type == WeaponType.AXE_TOOL) {
             meta.getPersistentDataContainer().set(Keys.ITEM_CATEGORY, PersistentDataType.STRING, "AXE_TOOL");
@@ -186,20 +186,20 @@ public final class ItemRarityService {
             double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
             double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
             if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_damage", mat),
                     "rpgloot_damage", VanillaStats.baseDamage(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
             if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_speed", mat),
                     "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
-                    UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
+                    modifierUuid("rpgloot_armor", mat),
                     "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> fixedStats = artifact.getFixedStats();
-        applyPassiveAttributes(meta, fixedStats);
+        applyPassiveAttributes(meta, mat, fixedStats);
 
         meta.getPersistentDataContainer().set(Keys.RARITY,      PersistentDataType.STRING, Rarity.LEGENDARY.name());
         meta.getPersistentDataContainer().set(Keys.BONUS_STATS, PersistentDataType.STRING, serializeStats(fixedStats));
@@ -243,21 +243,33 @@ public final class ItemRarityService {
 
     // ── Passive attribute stats (applied directly to item, not via listeners) ─
 
-    private void applyPassiveAttributes(ItemMeta meta, List<RolledStat> stats) {
+    private void applyPassiveAttributes(ItemMeta meta, Material mat, List<RolledStat> stats) {
         for (RolledStat rolled : stats) {
             switch (rolled.stat()) {
                 case HEALTH_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_MAX_HEALTH, new AttributeModifier(
-                        UUID.nameUUIDFromBytes("rpgloot_health".getBytes(StandardCharsets.UTF_8)),
+                        modifierUuid("rpgloot_health", mat),
                         "rpgloot_health", rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
                 case SPEED_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_MOVEMENT_SPEED, new AttributeModifier(
-                        UUID.nameUUIDFromBytes("rpgloot_speed_armor".getBytes(StandardCharsets.UTF_8)),
+                        modifierUuid("rpgloot_speed_armor", mat),
                         "rpgloot_speed_armor", 0.1 * (rolled.value() / 100.0), AttributeModifier.Operation.ADD_NUMBER));
                 case LUCK_BOOST -> meta.addAttributeModifier(Attribute.GENERIC_LUCK, new AttributeModifier(
-                        UUID.nameUUIDFromBytes("rpgloot_luck".getBytes(StandardCharsets.UTF_8)),
+                        modifierUuid("rpgloot_luck", mat),
                         "rpgloot_luck", rolled.value(), AttributeModifier.Operation.ADD_NUMBER));
                 default -> {}
             }
         }
+    }
+
+    /**
+     * A fixed UUID per modifier key would collide across simultaneously-equipped items (e.g.
+     * all 4 armor pieces using the same "rpgloot_armor" UUID) — Minecraft's attribute system
+     * only keeps one modifier per UUID active at a time, silently dropping the others, so a
+     * full armor set would only ever grant ONE piece's worth of bonus instead of all four
+     * summed. Keying the UUID by material too (each equipment slot has a distinct material)
+     * keeps every piece's modifier independent.
+     */
+    private static UUID modifierUuid(String key, Material mat) {
+        return UUID.nameUUIDFromBytes((key + "_" + mat.name()).getBytes(StandardCharsets.UTF_8));
     }
 
     // ── Public read helpers ───────────────────────────────────────────────
