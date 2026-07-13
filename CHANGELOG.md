@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.2] — 2026-07-13
+
+### Fixed
+- **RPGLoot weapons and armor were far weaker than plain vanilla gear.** `ItemRarityService` computed each item's attack damage/speed/armor bonus as *only the increment over vanilla* (e.g. `+0.3 armor` for an Uncommon iron piece) and applied that as the item's sole custom `AttributeModifier`. Minecraft replaces — not stacks — an item's intrinsic material attribute with any custom modifier you add, so the item ended up granting just that tiny increment instead of vanilla-plus-bonus (an Uncommon Iron Chestplate was granting ~0.3 armor instead of ~6.3). This affected every weapon and armor piece ever generated, at every rarity, via both normal drops and Artifacts. Newly generated items (from a fresh kill, chest, or `/rpgloot get`) now correctly carry the full vanilla-plus-bonus value. **Items already in player inventories (or already worn by mobs) keep their old, too-weak values baked in** — only re-rolling/re-obtaining the item fixes it, there's no automatic migration for existing items.
+
 ## [0.8.1] — 2026-07-13
 
 ### Added

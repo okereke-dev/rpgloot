@@ -79,17 +79,21 @@ public final class ItemRarityService {
         if (statsEnabled && type.isWeapon() && !isRanged(type)) {
             double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
             double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
+            // A custom AttributeModifier on an item REPLACES that item's intrinsic vanilla
+            // modifier for the same attribute, it doesn't stack with it — so the modifier's
+            // value must be the full vanilla+bonus total, not just the bonus increment, or
+            // the item ends up far weaker than plain vanilla gear instead of stronger.
             if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_damage", damageBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_damage", VanillaStats.baseDamage(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
             if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_speed", speedBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (statsEnabled && type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_armor", defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> rolledStats = statsEnabled ? rollBonusStats(rarity, type) : List.of();
@@ -183,15 +187,15 @@ public final class ItemRarityService {
             double speedBonus  = VanillaStats.baseSpeed(mat)  * (speedMult  - 1.0);
             if (damageBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_damage".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_damage", damageBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_damage", VanillaStats.baseDamage(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
             if (speedBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ATTACK_SPEED, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_speed".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_speed", speedBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (type.isArmor()) {
             double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
                     UUID.nameUUIDFromBytes("rpgloot_armor".getBytes(StandardCharsets.UTF_8)),
-                    "rpgloot_armor", defenseBonus, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> fixedStats = artifact.getFixedStats();

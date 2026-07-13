@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.8.1'
+version: '0.8.2'
 main: com.okereke.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Okereke
