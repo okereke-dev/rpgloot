@@ -48,6 +48,23 @@ structure-loot:
   enabled: true
   # Probability that a recognized structure chest receives an RPGLoot item (0.0 - 1.0)
   inject-chance: 0.45
+  # Max rarity per structure loot table. Add new keys here to recognize additional vanilla
+  # loot tables (or modded ones) without recompiling — the key is the loot table's path minus
+  # the "minecraft:" namespace, e.g. "chests/end_city_treasure".
+  max-rarity:
+    chests/simple_dungeon: UNCOMMON
+    chests/abandoned_mineshaft: UNCOMMON
+    chests/desert_pyramid: RARE
+    chests/jungle_temple: RARE
+    chests/stronghold_corridor: RARE
+    chests/stronghold_library: RARE
+    chests/woodland_mansion: HERO
+    chests/pillager_outpost: RARE
+    chests/shipwreck_supply: UNCOMMON
+    chests/bastion_treasure: HERO
+    chests/ruined_portal: RARE
+    chests/end_city_treasure: LEGENDARY
+    chests/ancient_city: LEGENDARY
 
 # Hostile (non-boss) mobs have a chance to spawn already wielding/wearing an RPGLoot item —
 # visible loot signal before a kill even happens, separate from and additive to drop-chance
@@ -93,14 +110,16 @@ artifact-drops:
 # All values are [min, max] and a random number is rolled in that range.
 # ══════════════════════════════════════════════════════════════════════
 
-# Damage/speed multiplier applied over the item's vanilla base stat, per rarity tier.
+# Damage/speed/armor multiplier applied over the item's vanilla base stat, per rarity tier.
 # Example: COMMON damage [1.05, 1.05] means a Common item deals exactly 5% more than vanilla.
+# Armor has its own (larger) range — a helmet/boots' vanilla base is small (2.0), so it needs
+# a bigger percentage than weapon damage to actually read as "better than vanilla" on the HUD.
 rarity-multipliers:
-  COMMON:    { damage: [1.05, 1.05], speed: [1.00, 1.00] }
-  UNCOMMON:  { damage: [1.05, 1.10], speed: [1.00, 1.05] }
-  RARE:      { damage: [1.10, 1.20], speed: [1.00, 1.10] }
-  HERO:      { damage: [1.20, 1.30], speed: [1.05, 1.15] }
-  LEGENDARY: { damage: [1.30, 1.40], speed: [1.10, 1.20] }
+  COMMON:    { damage: [1.05, 1.05], speed: [1.00, 1.00], armor: [1.15, 1.15] }
+  UNCOMMON:  { damage: [1.05, 1.10], speed: [1.00, 1.05], armor: [1.15, 1.25] }
+  RARE:      { damage: [1.10, 1.20], speed: [1.00, 1.10], armor: [1.25, 1.40] }
+  HERO:      { damage: [1.20, 1.30], speed: [1.05, 1.15], armor: [1.40, 1.60] }
+  LEGENDARY: { damage: [1.30, 1.40], speed: [1.10, 1.20], armor: [1.60, 1.85] }
 
 # Bonus stat value ranges per rarity tier. Common items never roll a bonus stat.
 # Units vary by stat (%, points, blocks) — see the wiki's Bonus Stats page.

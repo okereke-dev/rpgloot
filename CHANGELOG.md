@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.9.0] — 2026-07-13
+
+### Added
+- **Armor now has its own multiplier range** (`rarity-multipliers.<tier>.armor`), separate from weapon damage — a 10-20% bonus meant for weapons was nearly invisible on low-base-armor pieces like helmets/boots. Armor ranges from +15% (Common) to +60-85% (Legendary), tuned so the improvement is clearly felt on every piece, not just chestplates.
+- **Structure loot max-rarity is now configurable** (`structure-loot.max-rarity` in `config.yml`) instead of hardcoded in Java — tune per-structure rarity caps, or recognize additional loot tables, without recompiling.
+
 ## [0.8.3] — 2026-07-13
 
 ### Fixed

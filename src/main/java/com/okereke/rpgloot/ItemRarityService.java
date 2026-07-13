@@ -71,8 +71,10 @@ public final class ItemRarityService {
         // Compute all multipliers once so attributes and lore stay in sync
         double[] damageRange = statsEnabled ? balanceConfig.getDamageRange(rarity) : new double[]{1.0, 1.0};
         double[] speedRange  = statsEnabled ? balanceConfig.getSpeedRange(rarity)  : new double[]{1.0, 1.0};
+        double[] armorRange  = statsEnabled ? balanceConfig.getArmorRange(rarity)  : new double[]{1.0, 1.0};
         double primaryMult = randomBetween(damageRange[0], damageRange[1]);
         double speedMult   = randomBetween(speedRange[0], speedRange[1]);
+        double armorMult   = randomBetween(armorRange[0], armorRange[1]);
 
         Material mat = item.getType();
 
@@ -90,10 +92,13 @@ public final class ItemRarityService {
                     modifierUuid("rpgloot_speed", mat),
                     "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (statsEnabled && type.isArmor()) {
-            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
+            // Armor has its own multiplier range (rarity-multipliers.<tier>.armor), not the
+            // weapon damage range — a helmet/boots' vanilla base (2.0) is so small that reusing
+            // the weapon's 10-20% range made the improvement nearly invisible on the HUD.
+            double defenseBonus = VanillaStats.baseArmor(mat) * (armorMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
                     modifierUuid("rpgloot_armor", mat),
-                    "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_armor", VanillaStats.baseArmor(mat) * armorMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> rolledStats = statsEnabled ? rollBonusStats(rarity, type) : List.of();
@@ -134,8 +139,8 @@ public final class ItemRarityService {
             }
         } else if (type.isArmor()) {
             if (statsEnabled) {
-                double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
-                lore.add(statLine("Defense", primaryMult, defenseBonus));
+                double defenseBonus = VanillaStats.baseArmor(mat) * (armorMult - 1.0);
+                lore.add(statLine("Defense", armorMult, defenseBonus));
             }
         } else {
             lore.add(Component.text(toolLabel(type), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -179,8 +184,10 @@ public final class ItemRarityService {
 
         double[] damageRange = balanceConfig.getDamageRange(Rarity.LEGENDARY);
         double[] speedRange  = balanceConfig.getSpeedRange(Rarity.LEGENDARY);
+        double[] armorRange  = balanceConfig.getArmorRange(Rarity.LEGENDARY);
         double primaryMult = damageRange[1];
         double speedMult   = speedRange[1];
+        double armorMult   = armorRange[1];
 
         if (type.isWeapon() && !isRanged(type)) {
             double damageBonus = VanillaStats.baseDamage(mat) * (primaryMult - 1.0);
@@ -192,10 +199,10 @@ public final class ItemRarityService {
                     modifierUuid("rpgloot_speed", mat),
                     "rpgloot_speed", VanillaStats.baseSpeed(mat) * speedMult, AttributeModifier.Operation.ADD_NUMBER));
         } else if (type.isArmor()) {
-            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
+            double defenseBonus = VanillaStats.baseArmor(mat) * (armorMult - 1.0);
             if (defenseBonus > 0) meta.addAttributeModifier(Attribute.GENERIC_ARMOR, new AttributeModifier(
                     modifierUuid("rpgloot_armor", mat),
-                    "rpgloot_armor", VanillaStats.baseArmor(mat) * primaryMult, AttributeModifier.Operation.ADD_NUMBER));
+                    "rpgloot_armor", VanillaStats.baseArmor(mat) * armorMult, AttributeModifier.Operation.ADD_NUMBER));
         }
 
         List<RolledStat> fixedStats = artifact.getFixedStats();
@@ -226,8 +233,8 @@ public final class ItemRarityService {
             lore.add(statLine("Attack Damage", primaryMult, damageBonus));
             if (speedBonus > 0) lore.add(statLine("Attack Speed", speedMult, speedBonus));
         } else if (type.isArmor()) {
-            double defenseBonus = VanillaStats.baseArmor(mat) * (primaryMult - 1.0);
-            lore.add(statLine("Defense", primaryMult, defenseBonus));
+            double defenseBonus = VanillaStats.baseArmor(mat) * (armorMult - 1.0);
+            lore.add(statLine("Defense", armorMult, defenseBonus));
         }
 
         lore.add(Component.empty());

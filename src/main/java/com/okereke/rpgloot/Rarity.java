@@ -5,11 +5,11 @@ import net.kyori.adventure.text.format.TextColor;
 
 public enum Rarity {
 
-    COMMON(TextColor.color(0x9D9D9D), "Common", 1.05, 1.05, 1.0, 1.0, 0, 50),
-    UNCOMMON(NamedTextColor.YELLOW, "Uncommon", 1.05, 1.10, 1.00, 1.05, 1, 30),
-    RARE(TextColor.color(0xAA00AA), "Rare", 1.10, 1.20, 1.00, 1.10, 1, 13),
-    HERO(NamedTextColor.GREEN, "Hero", 1.20, 1.30, 1.05, 1.15, 1, 5),
-    LEGENDARY(NamedTextColor.GOLD, "Legendary", 1.30, 1.40, 1.10, 1.20, 2, 2);
+    COMMON(TextColor.color(0x9D9D9D), "Common", 1.05, 1.05, 1.0, 1.0, 1.15, 1.15, 0, 50),
+    UNCOMMON(NamedTextColor.YELLOW, "Uncommon", 1.05, 1.10, 1.00, 1.05, 1.15, 1.25, 1, 30),
+    RARE(TextColor.color(0xAA00AA), "Rare", 1.10, 1.20, 1.00, 1.10, 1.25, 1.40, 1, 13),
+    HERO(NamedTextColor.GREEN, "Hero", 1.20, 1.30, 1.05, 1.15, 1.40, 1.60, 1, 5),
+    LEGENDARY(NamedTextColor.GOLD, "Legendary", 1.30, 1.40, 1.10, 1.20, 1.60, 1.85, 2, 2);
 
     private final TextColor color;
     private final String displayName;
@@ -17,12 +17,15 @@ public enum Rarity {
     private final double maxDamageMultiplier;
     private final double minSpeedMultiplier;
     private final double maxSpeedMultiplier;
+    private final double minArmorMultiplier;
+    private final double maxArmorMultiplier;
     private final int bonusStatCount;
     private final int dropWeight;
 
     Rarity(TextColor color, String displayName,
            double minDamageMultiplier, double maxDamageMultiplier,
            double minSpeedMultiplier, double maxSpeedMultiplier,
+           double minArmorMultiplier, double maxArmorMultiplier,
            int bonusStatCount, int dropWeight) {
         this.color = color;
         this.displayName = displayName;
@@ -30,6 +33,8 @@ public enum Rarity {
         this.maxDamageMultiplier = maxDamageMultiplier;
         this.minSpeedMultiplier = minSpeedMultiplier;
         this.maxSpeedMultiplier = maxSpeedMultiplier;
+        this.minArmorMultiplier = minArmorMultiplier;
+        this.maxArmorMultiplier = maxArmorMultiplier;
         this.bonusStatCount = bonusStatCount;
         this.dropWeight = dropWeight;
     }
@@ -56,6 +61,14 @@ public enum Rarity {
 
     public double getMaxSpeedMultiplier() {
         return maxSpeedMultiplier;
+    }
+
+    public double getMinArmorMultiplier() {
+        return minArmorMultiplier;
+    }
+
+    public double getMaxArmorMultiplier() {
+        return maxArmorMultiplier;
     }
 
     public int getBonusStatCount() {

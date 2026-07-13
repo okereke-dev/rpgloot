@@ -1,6 +1,7 @@
 package com.okereke.rpgloot;
 
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.world.LootGenerateEvent;
@@ -12,8 +13,10 @@ import java.util.Random;
 
 public final class StructureLootListener implements Listener {
 
-    // Structure loot table path → max rarity allowed for that structure
-    private static final Map<String, Rarity> STRUCTURE_MAX_RARITY = Map.ofEntries(
+    // Structure loot table path → max rarity allowed for that structure. Used only as the
+    // fallback default for any key missing from config.yml's structure-loot.max-rarity, so
+    // admins can tune per-structure caps (or add new ones) without recompiling.
+    private static final Map<String, Rarity> DEFAULT_STRUCTURE_MAX_RARITY = Map.ofEntries(
             Map.entry("chests/simple_dungeon",        Rarity.UNCOMMON),
             Map.entry("chests/abandoned_mineshaft",   Rarity.UNCOMMON),
             Map.entry("chests/desert_pyramid",        Rarity.RARE),
@@ -54,7 +57,7 @@ public final class StructureLootListener implements Listener {
         if (event.getLootTable() == null) return;
         String tableKey = event.getLootTable().getKey().getKey();
 
-        Rarity maxRarity = STRUCTURE_MAX_RARITY.get(tableKey);
+        Rarity maxRarity = getMaxRarity(tableKey);
         if (maxRarity == null) return; // not a recognized structure chest
 
         if (!plugin.isDropsAllowed(event.getLootContext().getLocation())) return;
@@ -68,5 +71,19 @@ public final class StructureLootListener implements Listener {
         rarityService.applyRarity(item, rarity);
 
         event.getLoot().add(item);
+    }
+
+    /** Reads the max rarity for a structure loot table from config.yml, falling back to the compiled-in default for that key (or null if the key isn't recognized at all). */
+    private Rarity getMaxRarity(String tableKey) {
+        ConfigurationSection section = plugin.getConfig().getConfigurationSection("structure-loot.max-rarity");
+        if (section != null && section.isString(tableKey)) {
+            String raw = section.getString(tableKey);
+            try {
+                return Rarity.valueOf(raw.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Invalid rarity '" + raw + "' for structure-loot.max-rarity." + tableKey + " — using default.");
+            }
+        }
+        return DEFAULT_STRUCTURE_MAX_RARITY.get(tableKey);
     }
 }

@@ -19,6 +19,7 @@ public final class BalanceConfig {
     private final Logger logger;
     private final Map<Rarity, double[]> damageRanges = new EnumMap<>(Rarity.class);
     private final Map<Rarity, double[]> speedRanges  = new EnumMap<>(Rarity.class);
+    private final Map<Rarity, double[]> armorRanges  = new EnumMap<>(Rarity.class);
     private final Map<BonusStat, double[][]> statRanges = new EnumMap<>(BonusStat.class);
     private boolean statsEnabled = true;
 
@@ -30,6 +31,7 @@ public final class BalanceConfig {
     public void reload(FileConfiguration config) {
         damageRanges.clear();
         speedRanges.clear();
+        armorRanges.clear();
         statRanges.clear();
         load(config);
     }
@@ -41,9 +43,11 @@ public final class BalanceConfig {
         for (Rarity rarity : Rarity.values()) {
             double[] defaultDamage = {rarity.getMinDamageMultiplier(), rarity.getMaxDamageMultiplier()};
             double[] defaultSpeed  = {rarity.getMinSpeedMultiplier(), rarity.getMaxSpeedMultiplier()};
+            double[] defaultArmor  = {rarity.getMinArmorMultiplier(), rarity.getMaxArmorMultiplier()};
 
             damageRanges.put(rarity, readPair(rarityMults, rarity.name(), "damage", defaultDamage));
             speedRanges.put(rarity, readPair(rarityMults, rarity.name(), "speed", defaultSpeed));
+            armorRanges.put(rarity, readPair(rarityMults, rarity.name(), "armor", defaultArmor));
         }
 
         ConfigurationSection statSection = config.getConfigurationSection("bonus-stat-ranges");
@@ -84,6 +88,7 @@ public final class BalanceConfig {
 
     public double[] getDamageRange(Rarity rarity) { return damageRanges.get(rarity); }
     public double[] getSpeedRange(Rarity rarity)  { return speedRanges.get(rarity); }
+    public double[] getArmorRange(Rarity rarity)  { return armorRanges.get(rarity); }
 
     public double[] getStatRange(BonusStat stat, Rarity rarity) {
         double[][] ranges = statRanges.get(stat);
