@@ -5,7 +5,7 @@
 stats-enabled: true
 
 # Chance that a hostile mob drops a rarity item on death (0.0 - 1.0)
-drop-chance: 0.08
+drop-chance: 0.20
 
 # How bonus stats are displayed in item lore
 # Options: percentage | absolute | mixed
@@ -47,7 +47,16 @@ rpgmood-integration:
 structure-loot:
   enabled: true
   # Probability that a recognized structure chest receives an RPGLoot item (0.0 - 1.0)
-  inject-chance: 0.25
+  inject-chance: 0.45
+
+# Hostile (non-boss) mobs have a chance to spawn already wielding/wearing an RPGLoot item —
+# visible loot signal before a kill even happens, separate from and additive to drop-chance
+# above. Rarity is rolled through the same rpgmood-integration level floor as normal drops,
+# so this doesn't make good items any easier to get — only more visible. If the mob dies, the
+# item it's wearing is what drops (100% drop chance for that specific slot).
+mob-equip:
+  enabled: true
+  chance: 0.15
 
 # Boss drops — guaranteed RPGLoot weapon on death
 # min-rarity and max-rarity define the rarity range (inclusive)

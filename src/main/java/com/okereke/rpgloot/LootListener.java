@@ -81,8 +81,8 @@ public final class LootListener implements Listener {
         if (rarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
     }
 
-    /** Rolls rarity, raising the floor if RPGMood scaled this mob and its level meets a configured threshold. */
-    private Rarity rollRarity(LivingEntity entity) {
+    /** Rolls rarity, raising the floor if RPGMood scaled this mob and its level meets a configured threshold. Package-private: reused by MobEquipListener. */
+    Rarity rollRarity(LivingEntity entity) {
         if (!plugin.getConfig().getBoolean("rpgmood-integration.enabled", true)) {
             return roller.roll();
         }
@@ -98,7 +98,7 @@ public final class LootListener implements Listener {
 
     // ── Tier detection ────────────────────────────────────────────────────
 
-    private int getMobTier(LivingEntity entity) {
+    int getMobTier(LivingEntity entity) {
         World.Environment env = entity.getWorld().getEnvironment();
         // Nether and End both cap at Diamond — Netherite is boss-exclusive
         if (env == World.Environment.NETHER || env == World.Environment.THE_END) return 3;
@@ -117,7 +117,7 @@ public final class LootListener implements Listener {
 
     // ── Pool selection ────────────────────────────────────────────────────
 
-    private List<org.bukkit.Material> getWeaponPool(LivingEntity entity, int tier) {
+    List<org.bukkit.Material> getWeaponPool(LivingEntity entity, int tier) {
         List<org.bukkit.Material> genericPool = getGenericWeaponPool(tier);
         List<org.bukkit.Material> specificPool = getMobSpecificPool(entity, tier);
 
@@ -147,7 +147,7 @@ public final class LootListener implements Listener {
         };
     }
 
-    private List<org.bukkit.Material> getArmorPool(int tier) {
+    List<org.bukkit.Material> getArmorPool(int tier) {
         return switch (tier) {
             case 3  -> ItemPools.ARMOR_T3;
             case 2  -> ItemPools.ARMOR_T2;
@@ -157,7 +157,7 @@ public final class LootListener implements Listener {
 
     // ── Boss handling ─────────────────────────────────────────────────────
 
-    private boolean isBoss(LivingEntity entity) {
+    boolean isBoss(LivingEntity entity) {
         return entity instanceof ElderGuardian
                 || entity instanceof Wither
                 || entity instanceof Warden

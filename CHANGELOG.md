@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0] — 2026-07-13
+
+### Changed
+- **Loot visibility pass**, based on tester feedback that loot felt too rare: `drop-chance` raised `0.08` → `0.20` and `structure-loot.inject-chance` raised `0.25` → `0.45`. Rarity weights and the RPGMood level-floor system are untouched — this only makes *something* appear more often, not makes good items easier to get.
+
+### Added
+- **Mobs can now spawn already wielding/wearing a real RPGLoot item** (`mob-equip`, 15% chance per eligible hostile non-boss mob) — visible loot signal before a kill even happens, separate from and additive to the on-death drop-chance above. Reuses `LootListener`'s existing tier/pool/rarity-floor logic as-is, so this doesn't add a second rarity system to balance. If the mob dies, the item it's wearing is what drops (its equipment slot's drop chance is set to 100%).
+
 ## [0.7.1] — 2026-07-12
 
 ### Changed

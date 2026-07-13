@@ -54,6 +54,7 @@ public class RPGLootPlugin extends JavaPlugin {
         setListener           = new SetListener(this, setTracker);
 
         getServer().getPluginManager().registerEvents(lootListener, this);
+        getServer().getPluginManager().registerEvents(new MobEquipListener(this, rarityService, lootListener), this);
         getServer().getPluginManager().registerEvents(new CombatListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(new ProjectileListener(this, rarityService), this);
         getServer().getPluginManager().registerEvents(structureLootListener, this);
