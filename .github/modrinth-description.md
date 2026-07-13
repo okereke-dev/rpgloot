@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.4.2-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
+[![Version](https://img.shields.io/badge/version-0.9.0-brightgreen?style=flat-square)](https://github.com/okereke-dev/rpgloot/releases) [![Paper](https://img.shields.io/badge/Paper-1.20.4--26.1.2-blue?style=flat-square)](https://papermc.io) [![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](https://github.com/okereke-dev/rpgloot/blob/master/LICENSE)
 
 # ⚔️ RPGLoot
 
@@ -16,6 +16,7 @@ RPGLoot is built to be a **complement**, not an overhaul. It was reviewed agains
 - **`stats-enabled: false`** — a one-line config flip that turns RPGLoot into a **pure cosmetic rarity layer**. Items keep their generated name, color, and rarity tag but grant zero attribute bonuses, zero bonus stats, zero set bonuses. Vanilla combat stays completely untouched.
 - **Fully tunable power level** — every rarity multiplier and bonus-stat range lives in `config.yml`, not hardcoded. Want a subtler experience? Turn the numbers down. Want more power? Turn them up. No recompiling required.
 - **Real vanilla attributes, not fake NBT** — stat bonuses use Bukkit's native `AttributeModifier` system, the same one vanilla enchantments use, so RPGLoot plays nicely with other plugins instead of fighting them.
+- **Every item is vanilla-plus-bonus, never weaker** — rarity bonuses stack on top of an item's full vanilla stats, so even a Common piece hits at least as hard and blocks at least as much as its plain vanilla equivalent.
 
 ---
 
@@ -42,7 +43,7 @@ Every item rolls one of **5 rarity tiers**, each with its own color, name style,
 | 🟡 **Hero** | Gold | Very High | Very Low |
 | 🔴 **Legendary** | Red | Maximum | Rare |
 
-Each rarity scales damage, defense, and speed independently — and unlocks stronger bonus stat rolls.
+Each rarity scales damage, defense, and speed independently — armor has its own dedicated per-tier multiplier range (separate from weapon damage), so the bonus is clearly felt on every piece, not just chestplates — and unlocks stronger bonus stat rolls.
 
 ---
 
@@ -116,14 +117,14 @@ Every weapon and armor piece belongs to one of **8 named sets**. Collect matchin
 | 🌀 **Voidwalker** | XP Boost | +25% |
 | ✨ **Gilded** | Luck | +1.8 pts |
 
-The active piece count is **highlighted live in the item lore** in the set's rarity color. Bonuses stack additively with individual item stats.
+The active piece count is **highlighted live in the item lore** in the set's rarity color. Bonuses stack additively with individual item stats — every equipped piece contributes its own bonus independently, so a full set really does add up to what the lore shows.
 
 ---
 
 ## 💀 Drop Sources
 
 **Hostile Mobs**
-Every hostile mob has a configurable drop chance. Material tier scales with the mob's difficulty zone — skeletons don't drop Netherite, Wither Skeletons might.
+Every hostile mob has a configurable drop chance. Material tier scales with the mob's difficulty zone — skeletons don't drop Netherite, Wither Skeletons might. Some mobs can also spawn already wielding or wearing a real RPGLoot item (`mob-equip`) — a visible loot signal before you even land the kill; if the mob dies, that item is what drops.
 
 | Zone | Material Ceiling |
 |---|---|
@@ -136,7 +137,7 @@ Every hostile mob has a configurable drop chance. Material tier scales with the 
 Elder Guardian, Wither, Ender Dragon, and Warden guarantee a drop with a configurable **minimum rarity floor**.
 
 **Vanilla Structures**
-Strongholds, Bastions, End Cities, Jungle Temples, and more have a configurable chance to contain an RPGLoot weapon in their loot chests.
+Strongholds, Bastions, End Cities, Jungle Temples, and more have a configurable chance to contain an RPGLoot weapon in their loot chests, with a per-structure **max rarity** that's fully configurable in `config.yml` (`structure-loot.max-rarity`) rather than hardcoded.
 
 ---
 
@@ -162,7 +163,7 @@ Everything is tunable in `config.yml` — no recompile needed:
 stats-enabled: true
 
 # Drop chance per hostile mob kill
-drop-chance: 0.08
+drop-chance: 0.20
 
 # Rarity weights (higher = more common) — auto-normalized to 100
 rarity-weights:
@@ -175,18 +176,19 @@ rarity-weights:
 # Structure loot
 structure-loot:
   enabled: true
-  inject-chance: 0.25
+  inject-chance: 0.45
+  max-rarity: LEGENDARY
 
 # Rarity damage/speed multipliers — fully overridable
 rarity-multipliers:
-  LEGENDARY: { damage: [1.30, 1.40], speed: [1.10, 1.20] }
+  LEGENDARY: { damage: [1.30, 1.40], speed: [1.10, 1.20], armor: [0.60, 0.85] }
 
 # Bonus stat value ranges — fully overridable, one entry per stat
 bonus-stat-ranges:
   CRIT_CHANCE: { uncommon: [2,5], rare: [5,10], hero: [10,15], legendary: [15,20] }
 ```
 
-Per-mob material tiers, boss minimum rarity, and every rarity/stat range shown above ship pre-populated with the tested defaults and can be freely retuned.
+Per-mob material tiers, boss minimum rarity, and every rarity/stat range shown above ship pre-populated with the tested defaults and can be freely retuned. `config.yml` also auto-merges any new keys added by an update on startup or reload, without touching anything you've already customized.
 
 ---
 

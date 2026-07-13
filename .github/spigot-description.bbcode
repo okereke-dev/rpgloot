@@ -14,6 +14,7 @@ RPGLoot is built to be a [B]complement[/B], not an overhaul. It was reviewed aga
 [*][B]stats-enabled: false[/B] — a one-line config flip that turns RPGLoot into a pure cosmetic rarity layer. Items keep their generated name, color, and rarity tag but grant zero attribute bonuses, zero bonus stats, zero set bonuses. Vanilla combat stays completely untouched.
 [*][B]Fully tunable power level[/B] — every rarity multiplier and bonus-stat range lives in config.yml, not hardcoded. Want a subtler experience? Turn the numbers down. Want more power? Turn them up. No recompiling required.
 [*][B]Real vanilla attributes, not fake NBT[/B] — stat bonuses use Bukkit's native AttributeModifier system, the same one vanilla enchantments use, so RPGLoot plays nicely with other plugins instead of fighting them.
+[*][B]Every item is vanilla-plus-bonus, never weaker[/B] — rarity bonuses stack on top of an item's full vanilla stats, so even a Common piece hits at least as hard and blocks at least as much as its plain vanilla equivalent.
 [/LIST]
 
 [COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
@@ -43,7 +44,7 @@ Every item rolls one of [B]5 rarity tiers[/B], each with its own color, name sty
 [*]🔴 [B]Legendary[/B] (Red) — Maximum bonus, Rare drop chance
 [/LIST]
 
-Each rarity scales damage, defense, and speed independently — and unlocks stronger bonus stat rolls.
+Each rarity scales damage, defense, and speed independently — armor has its own dedicated per-tier multiplier range (separate from weapon damage), so the bonus is clearly felt on every piece, not just chestplates — and unlocks stronger bonus stat rolls.
 
 [COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
 
@@ -105,7 +106,7 @@ Every weapon and armor piece belongs to one of [B]8 named sets[/B]. Collect matc
 [*]✨ [B]Gilded[/B] — Luck (+1.8 pts)
 [/LIST]
 
-The active piece count is highlighted live in the item lore in the set's rarity color. Bonuses stack additively with individual item stats.
+The active piece count is highlighted live in the item lore in the set's rarity color. Bonuses stack additively with individual item stats — every equipped piece contributes its own bonus independently, so a full set really does add up to what the lore shows.
 
 [COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
 
@@ -124,7 +125,7 @@ Hand-authored, one-of-a-kind items with a fixed name, lore, and stats — no RNG
 
 [SIZE=4][B]💀 Drop Sources[/B][/SIZE]
 
-[B]Hostile Mobs[/B] — Every hostile mob has a configurable drop chance. Material tier scales with the mob's difficulty zone:
+[B]Hostile Mobs[/B] — Every hostile mob has a configurable drop chance. Material tier scales with the mob's difficulty zone. Some mobs can also spawn already wielding or wearing a real RPGLoot item (mob-equip) — a visible loot signal before you even land the kill; if the mob dies, that item is what drops.
 
 [LIST]
 [*]Overworld (basic) — up to Iron
@@ -135,7 +136,7 @@ Hand-authored, one-of-a-kind items with a fixed name, lore, and stats — no RNG
 
 [B]Boss Mobs[/B] — Elder Guardian, Wither, Ender Dragon, and Warden guarantee a drop with a configurable minimum rarity floor.
 
-[B]Vanilla Structures[/B] — Strongholds, Bastions, End Cities, Jungle Temples, and more have a configurable chance to contain an RPGLoot weapon in their loot chests.
+[B]Vanilla Structures[/B] — Strongholds, Bastions, End Cities, Jungle Temples, and more have a configurable chance to contain an RPGLoot weapon in their loot chests, with a per-structure max rarity that's fully configurable in config.yml (structure-loot.max-rarity) rather than hardcoded.
 
 [COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
 
@@ -161,7 +162,7 @@ Hand-authored, one-of-a-kind items with a fixed name, lore, and stats — no RNG
 
 [SIZE=4][B]⚙ Configuration[/B][/SIZE]
 
-Everything is tunable in config.yml — no recompile needed: pure cosmetic mode toggle, drop chances, rarity weights, structure loot, boss drop ranges, Artifact toggle, server-wide announcement settings, and fully overridable rarity multipliers + bonus-stat ranges. Ships pre-populated with tested, vanilla-friendly defaults.
+Everything is tunable in config.yml — no recompile needed: pure cosmetic mode toggle, drop chances, rarity weights, structure loot (including per-structure max rarity), boss drop ranges, Artifact toggle, server-wide announcement settings, and fully overridable rarity multipliers (armor has its own range, separate from weapon damage) + bonus-stat ranges. Ships pre-populated with tested, vanilla-friendly defaults, and auto-merges any new keys added by an update without touching your existing tuning.
 
 [COLOR=#444444]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/COLOR]
 
