@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.1] — 2026-07-12
+
+### Changed
+- Java package renamed `com.ricardo.*` → `com.okereke.*`. No functional change — the cross-plugin `PersistentDataContainer` keys (`rpgmood:*`, `rpgloot:*`) are plugin-name-based, not package-based, so RPGMood's soft-integration is unaffected.
+
 ## [0.7.0] — 2026-07-12
 
 ### Added
