@@ -5,6 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -13,20 +15,25 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.LootContext;
 import org.bukkit.loot.LootTable;
 import org.bukkit.plugin.EventExecutor;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Converts vanilla weapons, armor, and tools already present in structure / vault / archaeology
- * loot into RPGLoot items (same material). Axes become {@link WeaponType#AXE_TOOL}.
- * Does not inject extra items — if Minecraft didn't generate gear, nothing is added.
+ * Structure / vault / archaeology loot: optional extra native {@link LootTable#populateLoot}
+ * rolls, ensure-gear retries when no weapon/armor/tool appeared, then convert to RPGLoot.
+ * Axes become {@link WeaponType#AXE_TOOL}.
  */
 public final class StructureLootListener implements Listener {
+
+    private static final int CHEST_CAPACITY = 27;
 
     // Structure loot table path → max rarity allowed for that structure. Used only as the
     // fallback default for any key missing from config.yml's structure-loot.max-rarity, so
@@ -72,21 +79,42 @@ public final class StructureLootListener implements Listener {
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final RarityRoller roller;
+    private int extraRolls = 0;
+    private float luckBonus = 0f;
+    private boolean ensureGearEnabled = true;
+    private int ensureGearAttempts = 8;
+    private ChestLootDebug chestDebug;
 
     public StructureLootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
         this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
+        reload();
         registerVaultHook();
+    }
+
+    public void setChestDebug(ChestLootDebug chestDebug) {
+        this.chestDebug = chestDebug;
+    }
+
+    /** True if this loot-table key is in structure-loot.max-rarity (config or built-in defaults). */
+    public boolean isRecognizedTable(String tableKey) {
+        return getMaxRarity(tableKey) != null;
     }
 
     public void reload() {
         roller.reload(plugin.getConfig());
+        extraRolls = Math.max(0, plugin.getConfig().getInt("structure-loot.extra-rolls", 0));
+        luckBonus = (float) plugin.getConfig().getDouble("structure-loot.luck-bonus", 0.0);
+        ensureGearEnabled = plugin.getConfig().getBoolean("structure-loot.ensure-gear.enabled", true);
+        ensureGearAttempts = Math.max(0, plugin.getConfig().getInt("structure-loot.ensure-gear.attempts", 8));
     }
 
     @EventHandler
     public void onLootGenerate(LootGenerateEvent event) {
         if (!plugin.getConfig().getBoolean("structure-loot.enabled", true)) return;
+        // populateLoot does not fire this event; fillInventory would — skip plugin-caused fills.
+        if (event.isPlugin()) return;
 
         if (event.getLootTable() == null) return;
         String tableKey = event.getLootTable().getKey().getKey();
@@ -96,7 +124,130 @@ public final class StructureLootListener implements Listener {
 
         if (!plugin.isDropsAllowed(event.getLootContext().getLocation())) return;
 
-        LootConvert.convertGear(event.getLoot(), maxRarity, rarityService, roller);
+        List<ItemStack> loot = event.getLoot();
+        EnrichResult result = enrichAndConvert(event.getLootTable(), event.getLootContext(), loot, maxRarity);
+        if (chestDebug != null) {
+            chestDebug.notifyGenerate(
+                    event.getLootContext().getLocation(),
+                    tableKey,
+                    result.gearStacksAfterEnrich(),
+                    result.ensureGearUsed());
+        }
+    }
+
+    private record EnrichResult(int gearStacksAfterEnrich, boolean ensureGearUsed) {}
+
+    /**
+     * Shared chest/vault pipeline: extra native rolls → ensure gear → trim → RPGLoot convert.
+     * Rarity still comes from {@code rarity-weights} + {@code max-rarity} in convert.
+     */
+    private EnrichResult enrichAndConvert(LootTable table, LootContext context, List<ItemStack> loot, Rarity maxRarity) {
+        if (loot == null) return new EnrichResult(0, false);
+        appendNativeExtraRolls(table, context, loot);
+        boolean hadGear = containsConvertibleGear(loot);
+        boolean ensureUsed = ensureGearIfMissing(table, context, loot);
+        trimToChestCapacity(loot);
+        int gearCount = countConvertibleGear(loot);
+        LootConvert.convertGear(loot, maxRarity, rarityService, roller);
+        return new EnrichResult(gearCount, ensureUsed && !hadGear);
+    }
+
+    /**
+     * Extra full rolls of the same vanilla loot table via {@link LootTable#populateLoot}.
+     * Uses native pool weights/rolls — not a custom item inject. Luck only helps tables that
+     * define {@code bonus_rolls} / entry {@code quality} (most structure chests ignore it).
+     */
+    private void appendNativeExtraRolls(LootTable table, LootContext base, List<ItemStack> loot) {
+        if (extraRolls <= 0 || table == null || base == null) return;
+
+        LootContext context = boostContext(base);
+        for (int i = 0; i < extraRolls; i++) {
+            appendNonAir(loot, table.populateLoot(ThreadLocalRandom.current(), context));
+        }
+    }
+
+    /**
+     * If the merged loot has no convertible weapon/armor/tool, re-roll the same vanilla table
+     * up to {@code ensure-gear.attempts} times and add only gear stacks from the first successful roll.
+     * @return true if gear was added by this method
+     */
+    private boolean ensureGearIfMissing(LootTable table, LootContext base, List<ItemStack> loot) {
+        if (!ensureGearEnabled || ensureGearAttempts <= 0 || table == null || base == null) return false;
+        if (containsConvertibleGear(loot)) return false;
+
+        LootContext context = boostContext(base);
+        for (int i = 0; i < ensureGearAttempts; i++) {
+            Collection<ItemStack> rolled = table.populateLoot(ThreadLocalRandom.current(), context);
+            if (rolled == null || rolled.isEmpty()) continue;
+
+            boolean found = false;
+            for (ItemStack stack : rolled) {
+                if (LootConvert.isConvertibleGear(stack)) {
+                    loot.add(stack.clone());
+                    found = true;
+                }
+            }
+            if (found) return true;
+        }
+        return false;
+    }
+
+    private static boolean containsConvertibleGear(List<ItemStack> loot) {
+        return countConvertibleGear(loot) > 0;
+    }
+
+    private static int countConvertibleGear(List<ItemStack> loot) {
+        int n = 0;
+        for (ItemStack stack : loot) {
+            if (LootConvert.isConvertibleGear(stack)) n++;
+        }
+        return n;
+    }
+
+    /**
+     * When loot exceeds a single chest (27 slots), drop non-gear stacks first (random among them),
+     * then random gear if still over capacity.
+     */
+    private void trimToChestCapacity(List<ItemStack> loot) {
+        if (loot == null || loot.size() <= CHEST_CAPACITY) return;
+
+        ThreadLocalRandom rng = ThreadLocalRandom.current();
+        while (loot.size() > CHEST_CAPACITY) {
+            List<Integer> nonGearIndexes = new ArrayList<>();
+            for (int i = 0; i < loot.size(); i++) {
+                if (!LootConvert.isConvertibleGear(loot.get(i))) {
+                    nonGearIndexes.add(i);
+                }
+            }
+            if (!nonGearIndexes.isEmpty()) {
+                loot.remove((int) nonGearIndexes.get(rng.nextInt(nonGearIndexes.size())));
+            } else {
+                loot.remove(rng.nextInt(loot.size()));
+            }
+        }
+    }
+
+    private static void appendNonAir(List<ItemStack> loot, Collection<ItemStack> rolled) {
+        if (rolled == null || rolled.isEmpty()) return;
+        for (ItemStack stack : rolled) {
+            if (stack != null && !stack.getType().isAir()) {
+                loot.add(stack);
+            }
+        }
+    }
+
+    private LootContext boostContext(LootContext base) {
+        LootContext.Builder builder = new LootContext.Builder(base.getLocation())
+                .luck(base.getLuck() + luckBonus);
+        HumanEntity killer = base.getKiller();
+        if (killer != null) {
+            builder.killer(killer);
+        }
+        Entity looted = base.getLootedEntity();
+        if (looted != null) {
+            builder.lootedEntity(looted);
+        }
+        return builder.build();
     }
 
     /**
@@ -152,10 +303,19 @@ public final class StructureLootListener implements Listener {
                     if (loc != null && !plugin.isDropsAllowed(loc)) return;
 
                     List<ItemStack> dispensed = (List<ItemStack>) getDispensedLoot.invoke(event);
-                    if (dispensed == null || dispensed.isEmpty()) return;
+                    if (dispensed == null) return;
 
                     List<ItemStack> loot = new ArrayList<>(dispensed);
-                    LootConvert.convertGear(loot, maxRarity, rarityService, roller);
+                    if (loc != null) {
+                        LootContext ctx = new LootContext.Builder(loc).luck(luckBonus).build();
+                        EnrichResult result = enrichAndConvert(table, ctx, loot, maxRarity);
+                        if (chestDebug != null) {
+                            chestDebug.notifyGenerate(loc, table.getKey().getKey(),
+                                    result.gearStacksAfterEnrich(), result.ensureGearUsed());
+                        }
+                    } else {
+                        LootConvert.convertGear(loot, maxRarity, rarityService, roller);
+                    }
                     setDispensedLoot.invoke(event, loot);
                 } catch (ReflectiveOperationException ex) {
                     plugin.getLogger().warning("BlockDispenseLootEvent convert failed: " + ex.getMessage());

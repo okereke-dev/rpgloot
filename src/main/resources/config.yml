@@ -52,10 +52,26 @@ rpgmood-integration:
 
 # Converts vanilla weapons/armor/tools already rolled into structure chests, vaults, and
 # archaeology into RPGLoot items (same material, rarity capped per table). Axes become
-# tool-axes (AXE_TOOL), not combat axes. Does NOT inject extra items — if Minecraft didn't
-# generate gear, nothing is added. Vaults use BlockDispenseLootEvent (same max-rarity keys).
+# tool-axes (AXE_TOOL), not combat axes. Vaults use BlockDispenseLootEvent (same max-rarity keys).
+#
+# Gear FREQUENCY (weapon/armor/tool appearing): prefer ensure-gear (adds only gear stacks).
+# Gear RARITY is separate: global rarity-weights + max-rarity per table (unchanged by ensure-gear).
+#
+# extra-rolls: additional FULL rolls of the same vanilla table (duplicates food/ingots/etc.).
+# Default 0 — use ensure-gear instead so chests do not bloat with non-gear.
+# luck-bonus: almost no-op on vanilla structure tables (bonus_rolls/quality often 0).
+# ensure-gear: if the vanilla roll has no convertible gear, re-roll the same table up to
+# `attempts` times and add only gear stacks from the first roll that had any.
 structure-loot:
   enabled: true
+  extra-rolls: 0
+  luck-bonus: 0.0
+  ensure-gear:
+    enabled: true
+    attempts: 8
+  # Admin debug: /rpgloot debug chests — particles on virgin loot containers; look-at action bar.
+  debug:
+    particle-radius: 24
   # Max rarity per structure loot table. Add new keys here to recognize additional vanilla
   # loot tables (or modded ones) without recompiling — the key is the loot table's path minus
   # the "minecraft:" namespace, e.g. "chests/end_city_treasure". Special key "archaeology"
@@ -96,6 +112,16 @@ structure-loot:
     chests/trial_chambers/reward_ominous_rare: LEGENDARY
     chests/trial_chambers/reward_ominous_unique: LEGENDARY
     archaeology: RARE
+
+# Toolsmith / weaponsmith / armorer trade results become RPGLoot gear (axes as AXE_TOOL).
+# Max rarity is always Rare — Hero and Legendary stay drop/chest only.
+villager-trades:
+  enabled: true
+  max-rarity: RARE
+  professions:
+    - TOOLSMITH
+    - WEAPONSMITH
+    - ARMORER
 
 # Crafted tools (pick/shovel/hoe/rod/axe) always become RPGLoot. Axe crafts are woodcutting
 # tools (AXE_TOOL), not combat axes. Every material can roll up to Rare; diamond/netherite

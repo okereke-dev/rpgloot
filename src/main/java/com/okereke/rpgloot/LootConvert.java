@@ -32,12 +32,23 @@ public final class LootConvert {
     }
 
     /**
+     * True if this stack is a vanilla weapon, armor, or tool material RPGLoot can convert
+     * (axes count as woodcutting tools). Does not check whether the stack is already RPGLoot.
+     */
+    public static boolean isConvertibleGear(ItemStack stack) {
+        if (stack == null || stack.getType().isAir()) return false;
+        if (stack.getType().name().endsWith("_AXE")) return true;
+        WeaponType type = WeaponType.of(stack.getType());
+        return type != null && (type.isWeapon() || type.isArmor() || type.isTool());
+    }
+
+    /**
      * Converts a single stack if it is convertible vanilla gear; otherwise returns {@code null}
      * (caller should leave the original alone).
      */
     public static ItemStack convertOne(ItemStack stack, Rarity maxRarity,
                                        ItemRarityService rarityService, RarityRoller roller) {
-        if (stack == null || stack.getType().isAir()) return null;
+        if (!isConvertibleGear(stack)) return null;
         if (rarityService.getRarity(stack) != null) return null;
 
         WeaponType type;
@@ -45,7 +56,7 @@ public final class LootConvert {
             type = WeaponType.AXE_TOOL;
         } else {
             type = WeaponType.of(stack.getType());
-            if (type == null || !(type.isWeapon() || type.isArmor() || type.isTool())) return null;
+            if (type == null) return null;
         }
 
         Rarity rarity = roller.rollWithMax(maxRarity);

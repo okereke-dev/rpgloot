@@ -1,5 +1,5 @@
 name: RPGLoot
-version: '0.11.0'
+version: '0.14.4'
 main: com.okereke.rpgloot.RPGLootPlugin
 api-version: '1.20'
 author: Okereke
@@ -9,7 +9,7 @@ softdepend: [PlaceholderAPI, WorldGuard]
 commands:
   rpgloot:
     description: RPGLoot admin commands
-    usage: /rpgloot <get|getall|getset|getartifact|sets|stats|set|clear|leaderboard|reload>
+    usage: /rpgloot <get|getall|getset|getartifact|sets|stats|set|clear|leaderboard|reload|debug>
     permission: rpgloot.command.stats
 
 permissions:
@@ -38,6 +38,7 @@ permissions:
       rpgloot.command.clear: true
       rpgloot.command.leaderboard: true
       rpgloot.command.reload: true
+      rpgloot.command.debug: true
 
   # ── Commands ──────────────────────────────────────────────────────────
 
@@ -79,6 +80,10 @@ permissions:
 
   rpgloot.command.reload:
     description: Use /rpgloot reload to reload config.yml
+    default: op
+
+  rpgloot.command.debug:
+    description: Use /rpgloot debug to mark virgin loot chests and scan nearby
     default: op
 
   # ── Features ─────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ package com.okereke.rpgloot;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -438,6 +439,69 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("RPGLoot config reloaded.", NamedTextColor.GREEN));
             }
 
+            // /rpgloot debug chests | /rpgloot debug scan [radius]
+            case "debug" -> {
+                if (!sender.hasPermission("rpgloot.command.debug")) { noPermission(sender); return true; }
+                if (!(sender instanceof Player player)) { playerOnly(sender); return true; }
+                ChestLootDebug debug = ((RPGLootPlugin) plugin).getChestLootDebug();
+                if (debug == null) {
+                    sender.sendMessage(err("Chest debug is not available."));
+                    return true;
+                }
+                String mode = args.length > 1 ? args[1].toLowerCase() : "chests";
+                if (mode.equals("scan")) {
+                    int radius = ChestLootDebug.defaultScanRadius();
+                    if (args.length > 2) {
+                        try {
+                            radius = ChestLootDebug.clampRadius(Integer.parseInt(args[2]));
+                        } catch (NumberFormatException e) {
+                            sender.sendMessage(err("Radius must be a number."));
+                            return true;
+                        }
+                    }
+                    List<ChestLootDebug.VirginChest> found = debug.scan(player.getLocation(), radius);
+                    sender.sendMessage(Component.text("Virgin loot containers within " + radius + ": "
+                            + found.size(), NamedTextColor.GREEN));
+                    int shown = 0;
+                    for (ChestLootDebug.VirginChest chest : found) {
+                        if (shown++ >= 25) {
+                            sender.sendMessage(Component.text("… and " + (found.size() - 25)
+                                    + " more", NamedTextColor.DARK_GRAY));
+                            break;
+                        }
+                        Location loc = chest.location();
+                        sender.sendMessage(Component.text()
+                                .append(Component.text("  " + loc.getBlockX() + "," + loc.getBlockY()
+                                        + "," + loc.getBlockZ() + " ", NamedTextColor.GRAY))
+                                .append(Component.text(chest.tableKey(), NamedTextColor.AQUA))
+                                .append(Component.text(chest.recognized() ? " [RPGLoot]" : "", NamedTextColor.GREEN))
+                                .build());
+                    }
+                    if (found.isEmpty()) {
+                        sender.sendMessage(Component.text(
+                                "None found — already opened, wrong radius, or chunks unloaded.",
+                                NamedTextColor.DARK_GRAY));
+                    }
+                } else if (mode.equals("chests") || mode.equals("toggle") || mode.equals("on") || mode.equals("off")) {
+                    boolean wantOn = mode.equals("on") || mode.equals("chests") || mode.equals("toggle");
+                    if (mode.equals("chests") || mode.equals("toggle")) {
+                        boolean nowOn = debug.toggle(player);
+                        sender.sendMessage(Component.text(nowOn
+                                ? "Chest debug ON — green dust = RPGLoot virgin table; yellow = other loot table. Look at a chest for status. Open one to see generate chat."
+                                : "Chest debug OFF.",
+                                nowOn ? NamedTextColor.GREEN : NamedTextColor.GRAY));
+                    } else if (mode.equals("on")) {
+                        if (!debug.isEnabled(player)) debug.toggle(player);
+                        sender.sendMessage(Component.text("Chest debug ON.", NamedTextColor.GREEN));
+                    } else {
+                        debug.disable(player);
+                        sender.sendMessage(Component.text("Chest debug OFF.", NamedTextColor.GRAY));
+                    }
+                } else {
+                    sender.sendMessage(err("Usage: /rpgloot debug chests | /rpgloot debug scan [radius]"));
+                }
+            }
+
             default -> sendHelp(sender);
         }
         return true;
@@ -459,10 +523,18 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             if (sender.hasPermission("rpgloot.command.clear"))  subs.add("clear");
             if (sender.hasPermission("rpgloot.command.leaderboard")) subs.add("leaderboard");
             if (sender.hasPermission("rpgloot.command.reload")) subs.add("reload");
+            if (sender.hasPermission("rpgloot.command.debug"))  subs.add("debug");
             return filter(subs, args[0]);
         }
 
         String sub = args[0].toLowerCase();
+
+        if (sub.equals("debug")) {
+            if (args.length == 2) return filter(List.of("chests", "scan", "on", "off"), args[1]);
+            if (args.length == 3 && args[1].equalsIgnoreCase("scan")) {
+                return filter(List.of("16", "32", "48", "64"), args[2]);
+            }
+        }
 
         // get [rarity] [type] [material] [set]
         if (sub.equals("get")) {
@@ -538,6 +610,8 @@ public final class AdminCommand implements CommandExecutor, TabCompleter {
             helpLine(sender, "/rpgloot leaderboard [legendaries|sets]", "View the server leaderboard");
         if (sender.hasPermission("rpgloot.command.reload"))
             helpLine(sender, "/rpgloot reload", "Reload config.yml");
+        if (sender.hasPermission("rpgloot.command.debug"))
+            helpLine(sender, "/rpgloot debug chests|scan [r]", "Mark virgin loot chests / scan nearby");
     }
 
     private void helpLine(CommandSender sender, String cmd, String desc) {

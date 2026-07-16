@@ -1,5 +1,46 @@
 # Changelog
 
+## [0.14.4] — 2026-07-15
+
+### Fixed
+- **Enable crash on Paper 26** — `Villager.Profession` is no longer a Java enum; `EnumSet` / enum `valueOf` in `VillagerTradeListener` aborted `onEnable` (then masked by the disable NPE). Now uses `HashSet` + static profession constants.
+- **Particle renames on Paper 26** — `ParticleEffects` resolves DUST/REDSTONE, EXPLOSION/EXPLOSION_NORMAL, etc. by name.
+
+## [0.14.3] — 2026-07-15
+
+### Fixed
+- **Null-safe `onDisable`** — if `onEnable` fails before `SetListener` is created, disable no longer throws NPE (was masking the real enable error).
+- **Chest debug particles on Paper 26** — resolve `Particle.DUST` / `REDSTONE` at runtime.
+
+## [0.14.2] — 2026-07-15
+
+### Added
+- **Virgin chest debug** — `/rpgloot debug chests` toggles per-player markers (green dust = recognized RPGLoot table still unopened; yellow = other loot table). Looking at a container shows virgin vs already-generated on the action bar. Opening a virgin recognized chest pings nearby debug players with table key + whether ensure-gear ran. `/rpgloot debug scan [radius]` lists nearby virgin containers. Permission: `rpgloot.command.debug`.
+
+## [0.14.1] — 2026-07-15
+
+### Changed
+- **Default `structure-loot.extra-rolls` is now `0`.** Gear frequency relies on `ensure-gear` (adds only weapon/armor/tool from native re-rolls) so chests do not duplicate food/ingots/etc. Set `extra-rolls: 1+` only if you want denser non-gear loot too.
+
+## [0.14.0] — 2026-07-15
+
+### Added
+- **Ensure gear in structure chests** — if base + `extra-rolls` still produced no weapon/armor/tool, `structure-loot.ensure-gear` re-rolls the same vanilla `LootTable` (up to `attempts`, default 8) and adds only gear stacks from the first successful roll. Native materials only — no custom `ItemPools` inject. Same pipeline for vault/trial loot.
+- **Chest capacity trim** — when merged loot exceeds 27 stacks, non-gear is removed first so gear is preserved.
+
+### Note
+- Gear **frequency** = `extra-rolls` + `ensure-gear`. Gear **rarity** remains `rarity-weights` + `structure-loot.max-rarity` (unchanged).
+
+## [0.13.0] — 2026-07-15
+
+### Added
+- **Native structure-chest density** — `structure-loot.extra-rolls` re-rolls the same vanilla `LootTable` via `populateLoot` (native pools/weights) and merges into the chest before RPGLoot convert. Default `1` (~denser chests). `luck-bonus` is available but most vanilla structure tables ignore luck (`bonus_rolls`/`quality` often 0). Also applies to vault/trial `BlockDispenseLootEvent` loot.
+
+## [0.12.0] — 2026-07-15
+
+### Added
+- **Villager smith trades convert to RPGLoot.** Toolsmith, weaponsmith, and armorer offers with weapons/armor/tools become RPGLoot items (axes as `AXE_TOOL`). Max rarity is always **Rare** — Hero and Legendary stay drop/chest only. Config: `villager-trades`.
+
 ## [0.11.0] — 2026-07-15
 
 ### Added

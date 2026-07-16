@@ -11,7 +11,9 @@ public class RPGLootPlugin extends JavaPlugin {
     private LootListener lootListener;
     private StructureLootListener structureLootListener;
     private CraftListener craftListener;
+    private VillagerTradeListener villagerTradeListener;
     private SetListener setListener;
+    private ChestLootDebug chestLootDebug;
     private boolean worldGuardActive;
 
     @Override
@@ -56,7 +58,10 @@ public class RPGLootPlugin extends JavaPlugin {
         structureLootListener = new StructureLootListener(this, rarityService);
         ToolCrafting toolCrafting = new ToolCrafting(this, rarityService);
         craftListener         = new CraftListener(this, toolCrafting, rarityService);
+        villagerTradeListener = new VillagerTradeListener(this, rarityService);
         setListener           = new SetListener(this, setTracker);
+        chestLootDebug        = new ChestLootDebug(this, structureLootListener);
+        structureLootListener.setChestDebug(chestLootDebug);
 
         getServer().getPluginManager().registerEvents(lootListener, this);
         getServer().getPluginManager().registerEvents(new MobEquipListener(this, rarityService, lootListener), this);
@@ -64,10 +69,12 @@ public class RPGLootPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new ProjectileListener(this, rarityService), this);
         getServer().getPluginManager().registerEvents(structureLootListener, this);
         getServer().getPluginManager().registerEvents(craftListener, this);
+        getServer().getPluginManager().registerEvents(villagerTradeListener, this);
         getServer().getPluginManager().registerEvents(new ArmorListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(new ToolListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(setListener, this);
         getServer().getPluginManager().registerEvents(new SetsMenuListener(), this);
+        getServer().getPluginManager().registerEvents(chestLootDebug, this);
 
         AdminCommand adminCommand = new AdminCommand(this, rarityService, setTracker, playerStats);
         getCommand("rpgloot").setExecutor(adminCommand);
@@ -83,7 +90,10 @@ public class RPGLootPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        setListener.cancelAllPending();
+        // onEnable may have failed mid-way; never NPE during disable/reload.
+        if (setListener != null) {
+            setListener.cancelAllPending();
+        }
         DamageNumbers.cleanup(getServer());
         getLogger().info("RPGLoot disabled");
     }
@@ -98,9 +108,11 @@ public class RPGLootPlugin extends JavaPlugin {
         lootListener.reload();
         structureLootListener.reload();
         craftListener.reload();
+        villagerTradeListener.reload();
     }
 
     public ItemRarityService getRarityService() { return rarityService; }
     public SetTracker getSetTracker()           { return setTracker; }
     public PlayerStats getPlayerStats()         { return playerStats; }
+    public ChestLootDebug getChestLootDebug()   { return chestLootDebug; }
 }
