@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.1] — 2026-07-15
+
+### Changed
+- **Structure chest loot feels denser and less "trashy".** `structure-loot.inject-chance` raised `0.45` → `0.75`; chests can inject up to **2** items (`max-items` + `extra-item-chance: 0.30`); each item has a `35%` chance to be armor instead of a weapon. Early structures (dungeon/mineshaft/shipwreck) now cap at `RARE` instead of `UNCOMMON`. Weapon pools for chests no longer roll wood/stone — mid-tier structures use iron/gold, high-tier use iron→diamond (still no netherite). Many previously unrecognized loot tables are now covered (bastion non-treasure, buried treasure, nether bridge, village smiths, trial chambers, etc.).
+
+### Note for existing servers
+- `ConfigMerge` only **adds missing keys** — it does not overwrite values you already have. After updating the jar, raise `structure-loot.inject-chance` (and related keys) manually in your live `config.yml`, or delete those keys so the new defaults merge in.
+
 ## [0.9.0] — 2026-07-13
 
 ### Added

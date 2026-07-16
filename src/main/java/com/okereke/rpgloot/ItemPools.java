@@ -137,7 +137,24 @@ public final class ItemPools {
             Material.GOLDEN_SWORD, Material.GOLDEN_AXE, Material.CROSSBOW);
 
     // ── Pooled constant used by StructureLootListener ─────────────────────
+    /** @deprecated Prefer STRUCTURE_WEAPONS_MID / STRUCTURE_WEAPONS_HIGH — kept for callers that still expect the old name. */
     public static final List<Material> WEAPONS_NO_NETHERITE = WEAPONS_T3;
+
+    /**
+     * Structure chests with max rarity up through RARE — iron/gold only (no wood/stone dilution).
+     */
+    public static final List<Material> STRUCTURE_WEAPONS_MID = List.of(
+            Material.IRON_SWORD, Material.GOLDEN_SWORD,
+            Material.IRON_AXE, Material.GOLDEN_AXE,
+            Material.BOW, Material.CROSSBOW, Material.TRIDENT);
+
+    /**
+     * Structure chests with max rarity HERO/LEGENDARY — iron through diamond, no wood/stone/netherite.
+     */
+    public static final List<Material> STRUCTURE_WEAPONS_HIGH = List.of(
+            Material.IRON_SWORD, Material.GOLDEN_SWORD, Material.DIAMOND_SWORD,
+            Material.IRON_AXE, Material.GOLDEN_AXE, Material.DIAMOND_AXE,
+            Material.BOW, Material.CROSSBOW, Material.TRIDENT);
 
     private ItemPools() {}
 }

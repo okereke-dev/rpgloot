@@ -17,23 +17,36 @@ public final class StructureLootListener implements Listener {
     // fallback default for any key missing from config.yml's structure-loot.max-rarity, so
     // admins can tune per-structure caps (or add new ones) without recompiling.
     private static final Map<String, Rarity> DEFAULT_STRUCTURE_MAX_RARITY = Map.ofEntries(
-            Map.entry("chests/simple_dungeon",        Rarity.UNCOMMON),
-            Map.entry("chests/abandoned_mineshaft",   Rarity.UNCOMMON),
-            Map.entry("chests/desert_pyramid",        Rarity.RARE),
-            Map.entry("chests/jungle_temple",         Rarity.RARE),
-            Map.entry("chests/stronghold_corridor",   Rarity.RARE),
-            Map.entry("chests/stronghold_library",    Rarity.RARE),
-            Map.entry("chests/woodland_mansion",      Rarity.HERO),
-            Map.entry("chests/pillager_outpost",      Rarity.RARE),
-            Map.entry("chests/shipwreck_supply",      Rarity.UNCOMMON),
-            Map.entry("chests/bastion_treasure",      Rarity.HERO),
-            Map.entry("chests/ruined_portal",         Rarity.RARE),
-            Map.entry("chests/end_city_treasure",     Rarity.LEGENDARY),
-            Map.entry("chests/ancient_city",          Rarity.LEGENDARY)
+            Map.entry("chests/simple_dungeon", Rarity.RARE),
+            Map.entry("chests/abandoned_mineshaft", Rarity.RARE),
+            Map.entry("chests/desert_pyramid", Rarity.RARE),
+            Map.entry("chests/jungle_temple", Rarity.RARE),
+            Map.entry("chests/stronghold_corridor", Rarity.RARE),
+            Map.entry("chests/stronghold_library", Rarity.HERO),
+            Map.entry("chests/stronghold_crossing", Rarity.RARE),
+            Map.entry("chests/woodland_mansion", Rarity.HERO),
+            Map.entry("chests/pillager_outpost", Rarity.RARE),
+            Map.entry("chests/shipwreck_supply", Rarity.RARE),
+            Map.entry("chests/shipwreck_treasure", Rarity.RARE),
+            Map.entry("chests/buried_treasure", Rarity.RARE),
+            Map.entry("chests/bastion_treasure", Rarity.HERO),
+            Map.entry("chests/bastion_bridge", Rarity.RARE),
+            Map.entry("chests/bastion_other", Rarity.RARE),
+            Map.entry("chests/bastion_hoglin_stable", Rarity.RARE),
+            Map.entry("chests/nether_bridge", Rarity.RARE),
+            Map.entry("chests/ruined_portal", Rarity.RARE),
+            Map.entry("chests/end_city_treasure", Rarity.LEGENDARY),
+            Map.entry("chests/ancient_city", Rarity.LEGENDARY),
+            Map.entry("chests/underwater_ruin_small", Rarity.UNCOMMON),
+            Map.entry("chests/underwater_ruin_big", Rarity.RARE),
+            Map.entry("chests/igloo_chest", Rarity.UNCOMMON),
+            Map.entry("chests/village/village_weaponsmith", Rarity.RARE),
+            Map.entry("chests/village/village_toolsmith", Rarity.RARE),
+            Map.entry("chests/village/village_armorer", Rarity.RARE),
+            Map.entry("chests/trial_chambers/reward", Rarity.HERO),
+            Map.entry("chests/trial_chambers/reward_rare", Rarity.LEGENDARY),
+            Map.entry("chests/trial_chambers/reward_common", Rarity.RARE)
     );
-
-    // Structure loot uses the no-netherite pool — netherite is too powerful for random chest loot
-    private static final List<Material> WEAPON_POOL = ItemPools.WEAPONS_NO_NETHERITE;
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
@@ -62,15 +75,42 @@ public final class StructureLootListener implements Listener {
 
         if (!plugin.isDropsAllowed(event.getLootContext().getLocation())) return;
 
-        double injectChance = plugin.getConfig().getDouble("structure-loot.inject-chance", 0.40);
+        double injectChance = plugin.getConfig().getDouble("structure-loot.inject-chance", 0.75);
         if (random.nextDouble() > injectChance) return;
 
-        Rarity rarity = roller.rollWithMax(maxRarity);
-        Material mat = WEAPON_POOL.get(random.nextInt(WEAPON_POOL.size()));
-        ItemStack item = new ItemStack(mat);
-        rarityService.applyRarity(item, rarity);
+        int maxItems = Math.max(1, plugin.getConfig().getInt("structure-loot.max-items", 2));
+        double extraItemChance = plugin.getConfig().getDouble("structure-loot.extra-item-chance", 0.30);
+        double armorChance = plugin.getConfig().getDouble("structure-loot.armor-chance", 0.35);
 
-        event.getLoot().add(item);
+        event.getLoot().add(rollItem(maxRarity, armorChance));
+        for (int added = 1; added < maxItems; added++) {
+            if (random.nextDouble() > extraItemChance) break;
+            event.getLoot().add(rollItem(maxRarity, armorChance));
+        }
+    }
+
+    private ItemStack rollItem(Rarity maxRarity, double armorChance) {
+        boolean armor = random.nextDouble() < armorChance;
+        List<Material> pool = armor ? armorPoolFor(maxRarity) : weaponPoolFor(maxRarity);
+        Material mat = pool.get(random.nextInt(pool.size()));
+        ItemStack item = new ItemStack(mat);
+        rarityService.applyRarity(item, roller.rollWithMax(maxRarity));
+        return item;
+    }
+
+    /** Mid tier (≤ RARE): iron/gold. High tier (HERO+): iron→diamond. */
+    private static List<Material> weaponPoolFor(Rarity maxRarity) {
+        if (maxRarity.ordinal() >= Rarity.HERO.ordinal()) {
+            return ItemPools.STRUCTURE_WEAPONS_HIGH;
+        }
+        return ItemPools.STRUCTURE_WEAPONS_MID;
+    }
+
+    private static List<Material> armorPoolFor(Rarity maxRarity) {
+        if (maxRarity.ordinal() >= Rarity.HERO.ordinal()) {
+            return ItemPools.ARMOR_T3;
+        }
+        return ItemPools.ARMOR_T2;
     }
 
     /** Reads the max rarity for a structure loot table from config.yml, falling back to the compiled-in default for that key (or null if the key isn't recognized at all). */
