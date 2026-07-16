@@ -19,7 +19,10 @@ import java.util.Random;
  *   T3 — Nether + End          → up to Diamond
  *   Bosses only                → up to Netherite
  *
- * Weapon type selection (weighted):
+ * Drop category weights (config {@code drop-weights}, default 70/15/15):
+ *   weapon / armor / tool — tools use the full rarity roller (Legendary possible).
+ *
+ * Weapon type selection within the weapon category (weighted):
  *   70% — mob's signature weapon type (thematic)
  *   30% — any weapon from the tier pool (variety)
  */
@@ -62,23 +65,51 @@ public final class LootListener implements Listener {
         if (random.nextDouble() > dropChance) return;
 
         int tier = getMobTier(entity);
-
-        ItemStack item;
-        if (random.nextDouble() < 0.80) {
-            // 80%: weapon — mob's signature type (70%) or generic tier pool (30%)
-            List<org.bukkit.Material> pool = getWeaponPool(entity, tier);
-            item = new ItemStack(pool.get(random.nextInt(pool.size())));
-        } else {
-            // 20%: armor piece from tier pool
-            List<org.bukkit.Material> pool = getArmorPool(tier);
-            item = new ItemStack(pool.get(random.nextInt(pool.size())));
-        }
-
         Rarity rarity = rollRarity(entity);
-        rarityService.applyRarity(item, rarity);
+        ItemStack item = rollDropItem(entity, tier, rarity);
         event.getDrops().add(item);
         announcer.announce(killer, item, rarity);
         if (rarity == Rarity.LEGENDARY) playerStats.incrementLegendariesFound(killer);
+    }
+
+    /**
+     * Picks weapon / armor / tool by {@code drop-weights} and applies rarity.
+     * Package-private: reused by {@link MobEquipListener}.
+     */
+    ItemStack rollDropItem(LivingEntity entity, int tier, Rarity rarity) {
+        int wWeapon = Math.max(0, plugin.getConfig().getInt("drop-weights.weapon", 70));
+        int wArmor = Math.max(0, plugin.getConfig().getInt("drop-weights.armor", 15));
+        int wTool = Math.max(0, plugin.getConfig().getInt("drop-weights.tool", 15));
+        int total = wWeapon + wArmor + wTool;
+        if (total <= 0) {
+            wWeapon = 70;
+            wArmor = 15;
+            wTool = 15;
+            total = 100;
+        }
+
+        int roll = random.nextInt(total);
+        ItemStack item;
+        if (roll < wWeapon) {
+            List<org.bukkit.Material> pool = getWeaponPool(entity, tier);
+            item = new ItemStack(pool.get(random.nextInt(pool.size())));
+            rarityService.applyRarity(item, rarity);
+        } else if (roll < wWeapon + wArmor) {
+            List<org.bukkit.Material> pool = getArmorPool(tier);
+            item = new ItemStack(pool.get(random.nextInt(pool.size())));
+            rarityService.applyRarity(item, rarity);
+        } else {
+            List<org.bukkit.Material> pool = getToolPool(tier);
+            org.bukkit.Material mat = pool.get(random.nextInt(pool.size()));
+            item = new ItemStack(mat);
+            WeaponType type = ToolCrafting.resolveToolType(mat);
+            if (type != null) {
+                rarityService.applyRarity(item, rarity, type);
+            } else {
+                rarityService.applyRarity(item, rarity);
+            }
+        }
+        return item;
     }
 
     /** Rolls rarity, raising the floor if RPGMood scaled this mob and its level meets a configured threshold. Package-private: reused by MobEquipListener. */
@@ -152,6 +183,14 @@ public final class LootListener implements Listener {
             case 3  -> ItemPools.ARMOR_T3;
             case 2  -> ItemPools.ARMOR_T2;
             default -> ItemPools.ARMOR_T1;
+        };
+    }
+
+    List<org.bukkit.Material> getToolPool(int tier) {
+        return switch (tier) {
+            case 3  -> ItemPools.TOOLS_T3;
+            case 2  -> ItemPools.TOOLS_T2;
+            default -> ItemPools.TOOLS_T1;
         };
     }
 

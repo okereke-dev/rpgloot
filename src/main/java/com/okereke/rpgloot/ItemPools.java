@@ -49,6 +49,36 @@ public final class ItemPools {
             Material.IRON_HOE,     Material.DIAMOND_HOE,     Material.NETHERITE_HOE,
             Material.FISHING_ROD);
 
+    // ── Tiered tool pools (pick/shovel/hoe/axe + rod; axes drop as AXE_TOOL) ──
+
+    /** T1 ceiling: Iron. */
+    public static final List<Material> TOOLS_T1 = List.of(
+            Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+            Material.WOODEN_SHOVEL,  Material.STONE_SHOVEL,  Material.IRON_SHOVEL,
+            Material.WOODEN_HOE,     Material.STONE_HOE,     Material.IRON_HOE,
+            Material.WOODEN_AXE,     Material.STONE_AXE,     Material.IRON_AXE,
+            Material.FISHING_ROD);
+
+    /** T2 ceiling: Golden. */
+    public static final List<Material> TOOLS_T2 = List.of(
+            Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE, Material.GOLDEN_PICKAXE,
+            Material.WOODEN_SHOVEL,  Material.STONE_SHOVEL,  Material.IRON_SHOVEL,  Material.GOLDEN_SHOVEL,
+            Material.WOODEN_HOE,     Material.STONE_HOE,     Material.IRON_HOE,     Material.GOLDEN_HOE,
+            Material.WOODEN_AXE,     Material.STONE_AXE,     Material.IRON_AXE,     Material.GOLDEN_AXE,
+            Material.FISHING_ROD);
+
+    /** T3 ceiling: Diamond. Nether/End mobs. Netherite stays boss-exclusive. */
+    public static final List<Material> TOOLS_T3 = List.of(
+            Material.WOODEN_PICKAXE, Material.STONE_PICKAXE, Material.IRON_PICKAXE,
+            Material.GOLDEN_PICKAXE, Material.DIAMOND_PICKAXE,
+            Material.WOODEN_SHOVEL,  Material.STONE_SHOVEL,  Material.IRON_SHOVEL,
+            Material.GOLDEN_SHOVEL,  Material.DIAMOND_SHOVEL,
+            Material.WOODEN_HOE,     Material.STONE_HOE,     Material.IRON_HOE,
+            Material.GOLDEN_HOE,     Material.DIAMOND_HOE,
+            Material.WOODEN_AXE,     Material.STONE_AXE,     Material.IRON_AXE,
+            Material.GOLDEN_AXE,     Material.DIAMOND_AXE,
+            Material.FISHING_ROD);
+
     // ── Tiered general weapon pools (all weapon types, ceiling per tier) ──
 
     /** T1 ceiling: Iron. No gold/diamond/netherite. Mace excluded (end-game item). */

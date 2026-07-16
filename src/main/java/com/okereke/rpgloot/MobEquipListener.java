@@ -1,6 +1,5 @@
 package com.okereke.rpgloot;
 
-import org.bukkit.Material;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Monster;
 import org.bukkit.event.EventHandler;
@@ -9,7 +8,6 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -22,13 +20,11 @@ import java.util.Random;
 public final class MobEquipListener implements Listener {
 
     private final RPGLootPlugin plugin;
-    private final ItemRarityService rarityService;
     private final LootListener lootListener;
     private final Random random = new Random();
 
     public MobEquipListener(RPGLootPlugin plugin, ItemRarityService rarityService, LootListener lootListener) {
         this.plugin = plugin;
-        this.rarityService = rarityService;
         this.lootListener = lootListener;
     }
 
@@ -48,17 +44,8 @@ public final class MobEquipListener implements Listener {
         if (equipment == null) return;
 
         int tier = lootListener.getMobTier(entity);
-        ItemStack item;
-        if (random.nextDouble() < 0.80) {
-            List<Material> pool = lootListener.getWeaponPool(entity, tier);
-            item = new ItemStack(pool.get(random.nextInt(pool.size())));
-        } else {
-            List<Material> pool = lootListener.getArmorPool(tier);
-            item = new ItemStack(pool.get(random.nextInt(pool.size())));
-        }
-
         Rarity rarity = lootListener.rollRarity(entity);
-        rarityService.applyRarity(item, rarity);
+        ItemStack item = lootListener.rollDropItem(entity, tier, rarity);
         equip(equipment, item);
     }
 

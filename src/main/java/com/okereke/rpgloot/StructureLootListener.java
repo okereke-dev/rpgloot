@@ -1,16 +1,31 @@
 package com.okereke.rpgloot;
 
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Item;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockDropItemEvent;
 import org.bukkit.event.world.LootGenerateEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.loot.LootTable;
+import org.bukkit.plugin.EventExecutor;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
+/**
+ * Converts vanilla weapons, armor, and tools already present in structure / vault / archaeology
+ * loot into RPGLoot items (same material). Axes become {@link WeaponType#AXE_TOOL}.
+ * Does not inject extra items — if Minecraft didn't generate gear, nothing is added.
+ */
 public final class StructureLootListener implements Listener {
 
     // Structure loot table path → max rarity allowed for that structure. Used only as the
@@ -45,18 +60,24 @@ public final class StructureLootListener implements Listener {
             Map.entry("chests/village/village_armorer", Rarity.RARE),
             Map.entry("chests/trial_chambers/reward", Rarity.HERO),
             Map.entry("chests/trial_chambers/reward_rare", Rarity.LEGENDARY),
-            Map.entry("chests/trial_chambers/reward_common", Rarity.RARE)
+            Map.entry("chests/trial_chambers/reward_common", Rarity.RARE),
+            Map.entry("chests/trial_chambers/reward_unique", Rarity.LEGENDARY),
+            Map.entry("chests/trial_chambers/reward_ominous", Rarity.LEGENDARY),
+            Map.entry("chests/trial_chambers/reward_ominous_common", Rarity.HERO),
+            Map.entry("chests/trial_chambers/reward_ominous_rare", Rarity.LEGENDARY),
+            Map.entry("chests/trial_chambers/reward_ominous_unique", Rarity.LEGENDARY),
+            Map.entry("archaeology", Rarity.RARE)
     );
 
     private final RPGLootPlugin plugin;
     private final ItemRarityService rarityService;
     private final RarityRoller roller;
-    private final Random random = new Random();
 
     public StructureLootListener(RPGLootPlugin plugin, ItemRarityService rarityService) {
         this.plugin = plugin;
         this.rarityService = rarityService;
         this.roller = new RarityRoller(plugin.getConfig(), plugin.getLogger());
+        registerVaultHook();
     }
 
     public void reload() {
@@ -75,42 +96,92 @@ public final class StructureLootListener implements Listener {
 
         if (!plugin.isDropsAllowed(event.getLootContext().getLocation())) return;
 
-        double injectChance = plugin.getConfig().getDouble("structure-loot.inject-chance", 0.75);
-        if (random.nextDouble() > injectChance) return;
+        LootConvert.convertGear(event.getLoot(), maxRarity, rarityService, roller);
+    }
 
-        int maxItems = Math.max(1, plugin.getConfig().getInt("structure-loot.max-items", 2));
-        double extraItemChance = plugin.getConfig().getDouble("structure-loot.extra-item-chance", 0.30);
-        double armorChance = plugin.getConfig().getDouble("structure-loot.armor-chance", 0.35);
+    /**
+     * Archaeology: brushing suspicious sand/gravel can drop iron axes / wooden hoes.
+     * Convert those (and any other gear) with the {@code archaeology} max-rarity cap.
+     */
+    @EventHandler
+    public void onBlockDropItem(BlockDropItemEvent event) {
+        if (!plugin.getConfig().getBoolean("structure-loot.enabled", true)) return;
 
-        event.getLoot().add(rollItem(maxRarity, armorChance));
-        for (int added = 1; added < maxItems; added++) {
-            if (random.nextDouble() > extraItemChance) break;
-            event.getLoot().add(rollItem(maxRarity, armorChance));
+        BlockState state = event.getBlockState();
+        if (state == null || !isSuspicious(state.getType())) return;
+        if (!plugin.isDropsAllowed(event.getBlock().getLocation())) return;
+
+        Rarity maxRarity = getMaxRarity("archaeology");
+        if (maxRarity == null) maxRarity = Rarity.RARE;
+
+        for (Item drop : event.getItems()) {
+            ItemStack stack = drop.getItemStack();
+            ItemStack converted = LootConvert.convertOne(stack, maxRarity, rarityService, roller);
+            if (converted != null) {
+                drop.setItemStack(converted);
+            }
         }
     }
 
-    private ItemStack rollItem(Rarity maxRarity, double armorChance) {
-        boolean armor = random.nextDouble() < armorChance;
-        List<Material> pool = armor ? armorPoolFor(maxRarity) : weaponPoolFor(maxRarity);
-        Material mat = pool.get(random.nextInt(pool.size()));
-        ItemStack item = new ItemStack(mat);
-        rarityService.applyRarity(item, roller.rollWithMax(maxRarity));
-        return item;
+    /**
+     * BlockDispenseLootEvent (vaults / trial rewards) exists on newer Paper APIs but this
+     * project may compile against older paper-api — register reflectively.
+     */
+    @SuppressWarnings("unchecked")
+    private void registerVaultHook() {
+        try {
+            Class<? extends Event> eventClass =
+                    (Class<? extends Event>) Class.forName("org.bukkit.event.block.BlockDispenseLootEvent");
+            Method getLootTable = eventClass.getMethod("getLootTable");
+            Method getDispensedLoot = eventClass.getMethod("getDispensedLoot");
+            Method setDispensedLoot = eventClass.getMethod("setDispensedLoot", List.class);
+            Method getBlock = eventClass.getMethod("getBlock");
+
+            EventExecutor executor = (listener, event) -> {
+                try {
+                    if (!plugin.getConfig().getBoolean("structure-loot.enabled", true)) return;
+
+                    LootTable table = (LootTable) getLootTable.invoke(event);
+                    if (table == null) return;
+
+                    Rarity maxRarity = getMaxRarity(table.getKey().getKey());
+                    if (maxRarity == null) return;
+
+                    Block block = (Block) getBlock.invoke(event);
+                    Location loc = block != null ? block.getLocation() : null;
+                    if (loc != null && !plugin.isDropsAllowed(loc)) return;
+
+                    List<ItemStack> dispensed = (List<ItemStack>) getDispensedLoot.invoke(event);
+                    if (dispensed == null || dispensed.isEmpty()) return;
+
+                    List<ItemStack> loot = new ArrayList<>(dispensed);
+                    LootConvert.convertGear(loot, maxRarity, rarityService, roller);
+                    setDispensedLoot.invoke(event, loot);
+                } catch (ReflectiveOperationException ex) {
+                    plugin.getLogger().warning("BlockDispenseLootEvent convert failed: " + ex.getMessage());
+                }
+            };
+
+            plugin.getServer().getPluginManager().registerEvent(
+                    eventClass,
+                    this,
+                    EventPriority.NORMAL,
+                    executor,
+                    plugin,
+                    true
+            );
+            plugin.getLogger().info("BlockDispenseLootEvent hook registered — vault/trial loot converts to RPGLoot");
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().info("BlockDispenseLootEvent not present — vault convert skipped (chests still convert)");
+        } catch (Exception e) {
+            plugin.getLogger().warning("Could not register BlockDispenseLootEvent hook: " + e.getMessage());
+        }
     }
 
-    /** Mid tier (≤ RARE): iron/gold. High tier (HERO+): iron→diamond. */
-    private static List<Material> weaponPoolFor(Rarity maxRarity) {
-        if (maxRarity.ordinal() >= Rarity.HERO.ordinal()) {
-            return ItemPools.STRUCTURE_WEAPONS_HIGH;
-        }
-        return ItemPools.STRUCTURE_WEAPONS_MID;
-    }
-
-    private static List<Material> armorPoolFor(Rarity maxRarity) {
-        if (maxRarity.ordinal() >= Rarity.HERO.ordinal()) {
-            return ItemPools.ARMOR_T3;
-        }
-        return ItemPools.ARMOR_T2;
+    private static boolean isSuspicious(Material type) {
+        if (type == null) return false;
+        String name = type.name();
+        return name.equals("SUSPICIOUS_SAND") || name.equals("SUSPICIOUS_GRAVEL");
     }
 
     /** Reads the max rarity for a structure loot table from config.yml, falling back to the compiled-in default for that key (or null if the key isn't recognized at all). */

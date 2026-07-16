@@ -10,6 +10,7 @@ public class RPGLootPlugin extends JavaPlugin {
     private PlayerStats playerStats;
     private LootListener lootListener;
     private StructureLootListener structureLootListener;
+    private CraftListener craftListener;
     private SetListener setListener;
     private boolean worldGuardActive;
 
@@ -53,6 +54,8 @@ public class RPGLootPlugin extends JavaPlugin {
 
         lootListener          = new LootListener(this, rarityService, playerStats);
         structureLootListener = new StructureLootListener(this, rarityService);
+        ToolCrafting toolCrafting = new ToolCrafting(this, rarityService);
+        craftListener         = new CraftListener(this, toolCrafting, rarityService);
         setListener           = new SetListener(this, setTracker);
 
         getServer().getPluginManager().registerEvents(lootListener, this);
@@ -60,6 +63,7 @@ public class RPGLootPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new CombatListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(new ProjectileListener(this, rarityService), this);
         getServer().getPluginManager().registerEvents(structureLootListener, this);
+        getServer().getPluginManager().registerEvents(craftListener, this);
         getServer().getPluginManager().registerEvents(new ArmorListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(new ToolListener(this, rarityService, setTracker), this);
         getServer().getPluginManager().registerEvents(setListener, this);
@@ -93,6 +97,7 @@ public class RPGLootPlugin extends JavaPlugin {
         rarityService.clearStatCache();
         lootListener.reload();
         structureLootListener.reload();
+        craftListener.reload();
     }
 
     public ItemRarityService getRarityService() { return rarityService; }

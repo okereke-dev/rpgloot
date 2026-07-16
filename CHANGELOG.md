@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.11.0] — 2026-07-15
+
+### Added
+- **Tools drop from mobs** — death drops and mob-equip now roll tools (pick/shovel/hoe/woodcutting axe/rod) via `drop-weights` (default 70% weapon / 15% armor / 15% tool). Same full rarity roller as weapons, so **Legendary tools** can appear from kills (craft still caps Legendary out).
+- **Vault / trial-spawner loot converts** — `BlockDispenseLootEvent` converts gear from vault unlocks and trial rewards using the same `structure-loot.max-rarity` keys (including ominous reward tables).
+- **Archaeology converts tools** — brushing suspicious sand/gravel converts iron axes / wooden hoes (and any other gear) with max rarity from `structure-loot.max-rarity.archaeology` (default Rare).
+
+### Changed
+- Shared `LootConvert` helper for chest / vault / archaeology conversion (axes always `AXE_TOOL`).
+
+## [0.10.0] — 2026-07-15
+
+### Added
+- **Crafted tools are always RPGLoot.** Pickaxes, shovels, hoes, fishing rods, and axes from the crafting table (and the Crafter block when available) become RPGLoot tools with tool stats. Crafted axes are **woodcutting tools** (`AXE_TOOL`), not combat axes. Configurable under `tool-crafting`: wood/stone/gold/iron cap at **Rare**; diamond/netherite at **Hero**; **Legendary is loot-only** (never from craft).
+- **Structure chests convert tools too** — vanilla picks/shovels/hoes/rods/axes in recognized loot tables become RPGLoot (axes as `AXE_TOOL`). Rarity still uses the structure `max-rarity` cap (can be Legendary from End/Ancient City).
+- **Netherite smithing** preserves an existing tool's RPGLoot rarity when upgrading; vanilla tools upgraded to netherite get a craft-tier roll capped at Hero.
+
+## [0.9.2] — 2026-07-15
+
+### Changed
+- **Structure chests convert vanilla gear instead of injecting extras.** When a recognized structure loot table generates a weapon or armor piece, that exact item is turned into RPGLoot (same material, rarity capped by `structure-loot.max-rarity`). Removed `inject-chance` / `max-items` / `extra-item-chance` / `armor-chance` — no more separate roll that invents gear Minecraft didn't place. Tools (pickaxe/shovel/hoe/rod) stay vanilla. If a chest rolls no weapon/armor, it gets no RPGLoot gear.
+
+### Note for existing servers
+- `ConfigMerge` does not delete obsolete keys. Old `structure-loot.inject-chance` (and related) entries may remain in your live `config.yml` but are **ignored**. You can delete them by hand for clarity.
+
 ## [0.9.1] — 2026-07-15
 
 ### Changed

@@ -7,6 +7,13 @@ stats-enabled: true
 # Chance that a hostile mob drops a rarity item on death (0.0 - 1.0)
 drop-chance: 0.20
 
+# Relative weights for what kind of item drops (or is equipped) when a roll succeeds.
+# Tools use the same full rarity roller as weapons (Legendary possible) — craft still caps Legendary out.
+drop-weights:
+  weapon: 70
+  armor: 15
+  tool: 15
+
 # How bonus stats are displayed in item lore
 # Options: percentage | absolute | mixed
 stat-display: percentage
@@ -43,20 +50,16 @@ rpgmood-integration:
     HERO: 30
     LEGENDARY: 40
 
-# Items injected into vanilla structure chests on first generation
+# Converts vanilla weapons/armor/tools already rolled into structure chests, vaults, and
+# archaeology into RPGLoot items (same material, rarity capped per table). Axes become
+# tool-axes (AXE_TOOL), not combat axes. Does NOT inject extra items — if Minecraft didn't
+# generate gear, nothing is added. Vaults use BlockDispenseLootEvent (same max-rarity keys).
 structure-loot:
   enabled: true
-  # Probability that a recognized structure chest receives at least one RPGLoot item (0.0 - 1.0)
-  inject-chance: 0.75
-  # After the first item, up to this many total items may be injected (1 or 2).
-  max-items: 2
-  # Independent chance to add a second item when max-items allows it.
-  extra-item-chance: 0.30
-  # Chance each injected item is armor instead of a weapon.
-  armor-chance: 0.35
   # Max rarity per structure loot table. Add new keys here to recognize additional vanilla
   # loot tables (or modded ones) without recompiling — the key is the loot table's path minus
-  # the "minecraft:" namespace, e.g. "chests/end_city_treasure".
+  # the "minecraft:" namespace, e.g. "chests/end_city_treasure". Special key "archaeology"
+  # caps brushes of suspicious sand/gravel.
   max-rarity:
     chests/simple_dungeon: RARE
     chests/abandoned_mineshaft: RARE
@@ -87,6 +90,31 @@ structure-loot:
     chests/trial_chambers/reward: HERO
     chests/trial_chambers/reward_rare: LEGENDARY
     chests/trial_chambers/reward_common: RARE
+    chests/trial_chambers/reward_unique: LEGENDARY
+    chests/trial_chambers/reward_ominous: LEGENDARY
+    chests/trial_chambers/reward_ominous_common: HERO
+    chests/trial_chambers/reward_ominous_rare: LEGENDARY
+    chests/trial_chambers/reward_ominous_unique: LEGENDARY
+    archaeology: RARE
+
+# Crafted tools (pick/shovel/hoe/rod/axe) always become RPGLoot. Axe crafts are woodcutting
+# tools (AXE_TOOL), not combat axes. Every material can roll up to Rare; diamond/netherite
+# can reach Hero. Legendary is loot/drop only — never from the crafting table.
+tool-crafting:
+  enabled: true
+  max-rarity-by-tier:
+    wood: RARE
+    stone: RARE
+    gold: RARE
+    iron: RARE
+    diamond: HERO
+    netherite: HERO
+  weights:
+    common: 55
+    uncommon: 30
+    rare: 12
+    hero: 3
+    legendary: 0
 
 # Hostile (non-boss) mobs have a chance to spawn already wielding/wearing an RPGLoot item —
 # visible loot signal before a kill even happens, separate from and additive to drop-chance
